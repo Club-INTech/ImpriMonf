@@ -6,23 +6,23 @@ class Note :
         self.timeIn=timeIn
         self.timeOut=timeOut
         self.velocity=velocity
-        
+
         if not byte is None : self.setByte(byte)
-        
+
     # Permet de configurer la note selon un byte comme spécifié dans la
     # norme Midi
     def setByte(self, byte) :
         self.number=Note.numbers[byte%12]
         self.octave=byte//12
         self.byte = byte
-        
+
     # Cast as String
     def __str__(self) :
         try :
             return self.number + str(self.octave)
         except :
             return "#INCONNU"
-        
+
 if __name__ == "__main__" :
     n = Note()
     n.setByte(127)
