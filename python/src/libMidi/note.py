@@ -9,7 +9,7 @@ class Note :
 
         if not byte is None : self.setByte(byte)
 
-    # Permet de configurer la note selon un byte comme spécifié dans la
+    # Permet de configurer la note selon un byte comme specifie dans la
     # norme Midi
     def setByte(self, byte) :
         self.number=Note.numbers[byte%12]
