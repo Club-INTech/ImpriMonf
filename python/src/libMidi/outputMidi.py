@@ -34,10 +34,14 @@ class OutputMidi(MidiOutStream):
     def note_on(self, channel=0, note=0x40, velocity=0x40):
         if velocity == 0 :
             print ("Ca chie dans la colle pute")
-        self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.abs_time()*self.division/float(self.tempovalue)))
+        self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
-        self.currentTrack.getLastNote(channel, note)
+        self.currentTrack.getLastNote(channel, note).setTimeOut(self.getCurrentTime())
+
+
+    def getCurrentTime(self) :
+        return self.abs_time()*self.division/float(self.tempovalue)
 
 if __name__ == "__main__" :
     event_handler = OutputMidi()

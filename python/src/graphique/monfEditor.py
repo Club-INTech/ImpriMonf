@@ -28,13 +28,16 @@ class MonfEditor(QtGui.QWidget) :
         self.hauteurPiste = 24
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
 
-        self._DST = 200 #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 5 #Distance, en pixels, correspondant a 1s de musique
 
         if not monf is None : self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
 
-        print (self.taillePoincon)
+        self.getPoincons()
 
         self.show()
+
+    def getPoincons(self) :
+        self.poincons = self._monf.getAllPoincons()
 
     def paintEvent(self, e) :
         self.resize(self.sizeX, self.sizeY)
@@ -52,14 +55,17 @@ class MonfEditor(QtGui.QWidget) :
         if self._monf is None :
             return
         # Sinon, on continue
+        hauteursNotesPasUtilisees = []
+        # On affiche les coups de poincon
+        for note in self.poincons.keys() :
+            for dist in self.poincons[note] :
 
-        poincons = self._monf.getAllPoincons()
-        # On affiche les coups de poinçon
-        for note in poincons.keys() :
-            for dist in poincons[note] :
-
-                piste = self._monf.noteToPisteNumber[note]
-                qp.fillRect(self._DST*dist, piste*self.hauteurPiste + 2 , self.taillePoincon*self._DST, self.hauteurPiste - 4, self.couleurPiste)
+                try:
+                    piste = self._monf.noteToPisteNumber[note]
+                    qp.fillRect(self._DST*dist, piste*self.hauteurPiste + 2 , max(1, self.taillePoincon*self._DST), self.hauteurPiste - 4, self.couleurPiste)
+                except KeyError :
+                    if note not in hauteursNotesPasUtilisees : hauteursNotesPasUtilisees.append(note)
+        print (hauteursNotesPasUtilisees)
 
 
 if __name__ == '__main__':
@@ -67,9 +73,12 @@ if __name__ == '__main__':
 
     sys.path.append("../libMidi")
     sys.path.append("../libMidi/midi")
-    import monf
-
-    monfFile = monf.easyMonf()
+##    import monf
+##    monfFile = monf.easyMonf()
+    import morceau
+    m = morceau.Morceau("../../../multimedia/MIDIFILES/linkin_park-blackout.mid")
+    m.addIgnoredPiste(2)
+    monfFile = m.parseOutput()
 
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName('monfEditor')

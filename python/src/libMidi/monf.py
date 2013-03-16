@@ -2,7 +2,7 @@ class MonfOneTrack :
     """
     Classe MonfOneTrack
 
-    Contient les coups de poinÃƒÆ’Ã‚Â§on pour un instrument
+    Contient les coups de poincon pour un instrument
     """
     def __init__(self, nom="") :
         # Dico de type : {NoteA#:[Temps_ou_il_y_a_des_poincons_pour_cette_note], noteA:[etc..], etc...}
@@ -26,7 +26,7 @@ class Monf :
     """
     Classe Monf
 
-    Contient les coups de poinÃƒÆ’Ã‚Â§ons de tout un morceau
+    Contient les coups de poincons de tout un morceau
     """
     def __init__(self, nom="", morceau=None) :
         self._monfsOneTrack = []
@@ -37,7 +37,7 @@ class Monf :
             import morceau
             self._morceau = morceau.Morceau()
 
-        self.noteToPisteNumber = {"A#":1, "A":2, "B#":3, "C#":4, "C":5}
+        self.noteToPisteNumber = {"A1":1, "A2":2, "A3":3, "A4":4, "A5":5, "A6":6, "A7":7, "A#1":8, "A#2":9, "A#3":10, "A#4":11, "A#5":12, "A#6":13, "A#7":14, "B1":15, "B2":16, "B3":17, "B4":18, "B5":19, "C1":20, "C2":21, "C3":22, "C4":23, "C5":24}
 
 
     def addMonfOneTrack(self, m) :
@@ -55,6 +55,13 @@ class Monf :
                 else :
                     poincons[note] += monfTrack._poincons[note]
         return poincons
+
+    def getNombrePoincons(self, poincons=None):
+        if poincons is None : poincons = self.getAllPoincons()
+        a = 0
+        for k in poincons.keys() :
+            a += len(poincons[k])
+        return a
 
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """

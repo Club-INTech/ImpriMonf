@@ -23,6 +23,9 @@ class Note :
         except :
             return "#INCONNU"
 
+    def setTimeOut(self, timeOut):
+        self.timeOut=timeOut
+
 if __name__ == "__main__" :
     n = Note()
     n.setByte(127)

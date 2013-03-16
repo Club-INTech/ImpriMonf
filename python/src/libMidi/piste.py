@@ -28,8 +28,8 @@ class Piste :
 
     def getHauteurNotes(self) :
         """
-        Retourne un tableau contenant l'ensemble des différentes hauteur
-        de note présentes
+        Retourne un tableau contenant l'ensemble des differentes hauteur
+        de note presentes
         """
         tab = []
         for c in self._channels :
@@ -41,12 +41,21 @@ class Piste :
     def getMonf(self, morceau) :
         """
         Retourne un objet MonfOneTrack a partir de self
+
+        ATTENTION CETTE MÉTHODE N'EST PAS INSTANTANNÉE
         """
         m = MonfOneTrack(self._nom)
         for c in self._channels :
             for note in c : # On parcourt chaque note
-                # On recupere l'instant le plus proche
-                morceau._DST / morceau._taillePoincon
-        print (self.getHauteurNotes())
+                # On recupere l'instant le plus proche du début de la note
+                dureePoincon = float(morceau._taillePoincon / morceau._DST)
+                idPoinconIn = int(note.timeIn // dureePoincon)
+                idPoinconOut = int(note.timeOut // dureePoincon)
+
+                if (not idPoinconOut == 0) :
+                    for idPoincon in range(idPoinconIn, idPoinconOut) :
+                        m.addPoincon(str(note), idPoincon*dureePoincon)
+##                else :
+##                    print(idPoinconIn, idPoinconOut)
 
         return m
