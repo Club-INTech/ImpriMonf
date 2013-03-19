@@ -18,6 +18,7 @@ class OutputMidi(MidiOutStream):
 
     def tempo(self, value) :
         self.tempovalue = value
+        self._bpm = int (60000000./value)
 
     def start_of_track(self, track) :
         self.currentTrack = Piste()
@@ -35,12 +36,19 @@ class OutputMidi(MidiOutStream):
         if velocity == 0 :
             print ("Ca chie dans la colle pute")
         self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
+##        print ("ON - ", note, self.getCurrentTime(), self.abs_time(), "CHANNEL :", channel)
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
-        self.currentTrack.getLastNote(channel, note).setTimeOut(self.getCurrentTime())
+        ancienneNote = self.currentTrack.getLastNote(channel, note)
+        ancienneNote.setTimeOut(self.getCurrentTime())
+##        print ("NOTE OFF - ", ancienneNote, self.getCurrentTime(), "CHANNEL :", channel)
 
 
     def getCurrentTime(self) :
+        """
+        Y'A DES PUTAIN DE BUGS DANS CETTE FONCTION WTFFFFFFFFFFF FDPPPPPPPPPPPPPPPPPPPPP
+        """
+
         return self.abs_time()*self.division/float(self.tempovalue)
 
 if __name__ == "__main__" :

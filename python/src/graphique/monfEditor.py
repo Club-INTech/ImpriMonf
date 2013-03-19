@@ -28,7 +28,7 @@ class MonfEditor(QtGui.QWidget) :
         self.hauteurPiste = 24
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
 
-        self._DST = 5 #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 2000 #Distance, en pixels, correspondant a 1s de musique
 
         if not monf is None : self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
 
@@ -38,6 +38,7 @@ class MonfEditor(QtGui.QWidget) :
 
     def getPoincons(self) :
         self.poincons = self._monf.getAllPoincons()
+        print (self._monf.getNombrePoincons(self.poincons))
 
     def paintEvent(self, e) :
         self.resize(self.sizeX, self.sizeY)
@@ -65,7 +66,7 @@ class MonfEditor(QtGui.QWidget) :
                     qp.fillRect(self._DST*dist, piste*self.hauteurPiste + 2 , max(1, self.taillePoincon*self._DST), self.hauteurPiste - 4, self.couleurPiste)
                 except KeyError :
                     if note not in hauteursNotesPasUtilisees : hauteursNotesPasUtilisees.append(note)
-        print (hauteursNotesPasUtilisees)
+##        print (hauteursNotesPasUtilisees)
 
 
 if __name__ == '__main__':
@@ -76,8 +77,7 @@ if __name__ == '__main__':
 ##    import monf
 ##    monfFile = monf.easyMonf()
     import morceau
-    m = morceau.Morceau("../../../multimedia/MIDIFILES/linkin_park-blackout.mid")
-    m.addIgnoredPiste(2)
+    m = morceau.Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
     monfFile = m.parseOutput()
 
     app = QtGui.QApplication(sys.argv)
