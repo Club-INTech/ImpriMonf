@@ -4,16 +4,19 @@ from monf import MonfOneTrack
 class Piste :
     def __init__(self) :
         self._channels = [[]]*16
+        self._lastNotes = [[]]*16
         self._nom = ""
 
-    def addNote(self, channel, note) :
-        self._channels[channel].append(note)
+    def addNote(self, channel, noteInstance) :
+        self._channels[channel].append(noteInstance)
+        self._lastNotes[channel].append(noteInstance)
 
     def getLastNote(self, channel, byteNote) :
-        chan = self._channels[channel]
-        for note in chan :
-            if note.byte == byteNote :
-                return note
+        chan, lastNotes = self._channels[channel], self._lastNotes[channel]
+        for noteInstance in self._lastNotes[channel] :
+            if noteInstance.byte == byteNote :
+                self._lastNotes[channel].remove(noteInstance)
+                return noteInstance
 
     def setNom(self, nom) :
         self._nom = nom
@@ -42,12 +45,12 @@ class Piste :
         """
         Retourne un objet MonfOneTrack a partir de self
 
-        ATTENTION CETTE MÉTHODE N'EST PAS INSTANTANNÉE
+        ATTENTION CETTE METHODE N'EST PAS INSTANTANNEE
         """
         m = MonfOneTrack(self._nom)
         for c in self._channels :
             for note in c : # On parcourt chaque note
-                # On recupere l'instant le plus proche du début de la note
+                # On recupere l'instant le plus proche du dÃ©but de la note
                 dureePoincon = float(morceau._taillePoincon / morceau._DST)
                 idPoinconIn = int(note.timeIn // dureePoincon)
                 idPoinconOut = int(note.timeOut // dureePoincon)

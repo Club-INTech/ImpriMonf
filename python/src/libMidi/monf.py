@@ -11,7 +11,7 @@ class MonfOneTrack :
 
     # Ajout d'un coup de poincon
     def addPoincon(self, hauteurNote, temps) :
-        if hauteurNote in self._poincons.keys() :
+        if hauteurNote in self._poincons.keys() and not temps in self._poincons[hauteurNote]:
             self._poincons[hauteurNote].append(temps)
         else :
             self._poincons[hauteurNote] = [temps]

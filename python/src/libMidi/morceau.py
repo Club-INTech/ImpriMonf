@@ -7,8 +7,8 @@ from outputMidi import OutputMidi
 class Morceau :
     def __init__(self, nomFichier=None) :
         self._ignoredPistes = []
-        self._DST = 50   # Distance (en mm) correspondant a 1s de musique
-        self._taillePoincon = 10 # Escpacement (en mm) entre deux poincons
+        self._DST = 200   # Distance (en mm) correspondant a 1s de musique
+        self._taillePoincon = 3.5 # Escpacement (en mm) entre deux poincons
 
         if not nomFichier is None :
             self._nomFichier = nomFichier
