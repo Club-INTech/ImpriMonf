@@ -8,24 +8,25 @@ const int pinSignal1 = 2;// pin d'interruption 0 pour le premier signal
 const int pinSignal2 = 3;// pin d'interruption 1 pour le second signal
 
 /** constantes pour le moteur à courant continu **/
-const int pinDIR = 4;    // pin de direction du moteur à courant continu
-const int pinPWM = 5;    // pin de PWM du moteur à courant continu
+const int pinDIR = 4;             // pin de direction du moteur à courant continu
+const int pinPWM = 5;             // pin de PWM du moteur à courant continu
 const int frequence_asserv = 150; // fréquence de mise à jour du PWM, en Hz
 
 /** constantes pour le moteur pas à pas **/
 const int pinSENS  = 6;    // pin de sens du moteur pas à pas
 const int pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
-const int frequence_PasAPas = 300;  // fréquence d'envoi des impulsions au pas à pas, en Hz
+const int pinENABLE = 8;   // pin d'activation du moteur pas à pas
+const int frequence_PasAPas = 630;  // fréquence d'envoi des impulsions au pas à pas, en Hz
 
 /** variables globales, partagées par plusieurs fonctions **/
 int ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
 int consigne_ticks = 0; // consigne reçue de position du moteur à courant continu, en ticks
 //constantes d'asservissement pid
-float kp = 0.8;         // Coefficient proportionnel
-float kd = 0.1;         // Coefficient dérivateur
+float kp = 0.16;         // Coefficient proportionnel
 float ki = 0.0;         // Coefficient intégrateur
+float kd = 0.3;         // Coefficient dérivateur
 int pas = 0;            // position du moteur pas à pas depuis le dernier recalage, valeur en pas
-int consigne_pas = 10000;   // consigne reçue de position du moteur pas à pas, en pas
+int consigne_pas = 0;   // consigne reçue de position du moteur pas à pas, en pas
 
 //***  niveaux de prescaler  ***//
 //int mode = 0b00000001; float prescaler = 64.;// 62kHz
@@ -48,6 +49,7 @@ void setup() {
     pinMode(pinDIR,  OUTPUT);
     pinMode(pinSENS, OUTPUT);
     pinMode(pinCLOCK,OUTPUT);
+    pinMode(pinENABLE,OUTPUT);
     
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
@@ -179,13 +181,13 @@ void asservissementPWM()
     else if(pwd > 255)
         pwd = 255;
     
-    /*
+    
     //DEBUG
     Serial.print(ticks);
-    Serial.print("\t");
-    Serial.print(pwd);
+    //Serial.print("\t");
+    //Serial.print(pwd);
     Serial.print("\n");
-    */
+    
     
     if(pwd < 0)
     {
@@ -216,17 +218,21 @@ void _frontMontantPAP()
   int erreur = consigne_pas - pas;
   if (erreur < 0)
   {
-      //Serial.print("<<<\n");
+      digitalWrite(pinENABLE, HIGH); //activation du moteur
       digitalWrite(pinSENS, LOW);
       digitalWrite(pinCLOCK, HIGH);
       pas--;
   }
   else if (erreur > 0)
   {
-      //Serial.print(">>>\n");
+      digitalWrite(pinENABLE, HIGH); //activation du moteur
       digitalWrite(pinSENS, HIGH);
       digitalWrite(pinCLOCK, HIGH);
       pas++;
+  }
+  else
+  {
+      digitalWrite(pinENABLE, LOW); //desactivation du moteur (évite de vibrer)
   }
 }
 
