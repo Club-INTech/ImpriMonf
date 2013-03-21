@@ -10,12 +10,12 @@ const int pinSignal2 = 3;// pin d'interruption 1 pour le second signal
 /** constantes pour le moteur à courant continu **/
 const int pinDIR = 4;    // pin de direction du moteur à courant continu
 const int pinPWM = 5;    // pin de PWM du moteur à courant continu
-const int frequence_asserv = 500; // fréquence de mise à jour du PWM, en Hz
+const int frequence_asserv = 150; // fréquence de mise à jour du PWM, en Hz
 
 /** constantes pour le moteur pas à pas **/
 const int pinSENS  = 6;    // pin de sens du moteur pas à pas
 const int pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
-const int frequence_PasAPas = 240;  // fréquence d'envoi des impulsions au pas à pas, en Hz
+const int frequence_PasAPas = 300;  // fréquence d'envoi des impulsions au pas à pas, en Hz
 
 /** variables globales, partagées par plusieurs fonctions **/
 int ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
@@ -28,9 +28,8 @@ int pas = 0;            // position du moteur pas à pas depuis le dernier recal
 int consigne_pas = 10000;   // consigne reçue de position du moteur pas à pas, en pas
 
 //***  niveaux de prescaler  ***//
-int mode = 0b00000001; int prescaler = 64;// 62kHz
-//int mode = 0b00000010; int prescaler = 8;// 7.8kHz
-//int mode = 0b00000011; int prescaler = 1;// 1kHz
+//int mode = 0b00000001; float prescaler = 64.;// 62kHz
+int mode = 0b00000010; float prescaler = 8.;// 7.8kHz
   
 /** Routine d'initialisation **/
 void setup() {
@@ -51,14 +50,14 @@ void setup() {
     pinMode(pinCLOCK,OUTPUT);
     
     //immobilisation initiale du moteur
-    Serial.print("init\n");
     analogWrite(pinPWM, 0);
-    delay(3000);
     
     // Interruptions pour calcul du PID et asservissement
-    timerAsservPWM.setInterval(1000/(frequence_asserv/prescaler), asservissementPWM);
+    timerAsservPWM.setInterval(1000./(frequence_asserv/prescaler), asservissementPWM);
     // pour les impulsions du pas à pas (la fréquence est doublée pour générer les fronts)
-    timerPasAPas.setInterval(1000/(2*frequence_PasAPas/prescaler), gestionPasAPas);
+    timerPasAPas.setInterval(1000./(2*frequence_PasAPas/prescaler), gestionPasAPas);
+    
+    Serial.print("init\n");
 }
 
 /** lecture (blocante) d'une ligne sur la série **/
