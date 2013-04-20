@@ -63,9 +63,22 @@ class Monf :
             a += len(poincons[k])
         return a
 
+    def getNumeroPisteOfNote(self, note) :
+        """
+        Retourne le numéro de piste d'une note
+        """
+        return self.noteToPisteNumber[str(note)]
+
+    def save(self, filename) :
+        import pickle
+
+        with open(filename, "wb") as file :
+            pickle.dump(self, file)
+
+
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """
-    monf = Monf()
+    monf = Monf("Test")
     monf1 = MonfOneTrack()
     monf2 = MonfOneTrack()
     monf1.addPoincon("A#", 0.1)
@@ -80,6 +93,24 @@ def easyMonf() :
 
     return monf
 
+def openMonf(filename) :
+    """
+    Fonction a utiliser pour sauvegarder un monf.
+    """
+    with open(filename, "rb") as file :
+        import pickle
+        obj = pickle.load(file)
+        if isinstance(obj,Monf) :
+            return obj
+        else :
+            raise Exception("Fichier .monf corronmpu")
+
 if __name__=="__main__" :
     m = easyMonf()
-    print (m.getAllPoincons())
+    m.save("lolcat.monf")
+
+    n = openMonf("lolcat.monf")
+
+
+
+

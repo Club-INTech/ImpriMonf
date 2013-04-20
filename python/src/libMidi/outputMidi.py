@@ -20,6 +20,7 @@ class OutputMidi(MidiOutStream):
         self.tempovalue = value
         self._bpm = int (60000000./value)
 
+
     def start_of_track(self, track) :
         self.currentTrack = Piste()
         self._tracks[track]=self.currentTrack
@@ -45,15 +46,24 @@ class OutputMidi(MidiOutStream):
 
 
     def getCurrentTime(self) :
-        """
-        Y'A DES PUTAIN DE BUGS DANS CETTE FONCTION WTFFFFFFFFFFF FDPPPPPPPPPPPPPPPPPPPPP
-        """
+        nombre_de_noires_depuis_debut = (self.abs_time()/self.division)
+        temps_en_s_depuis_debut = nombre_de_noires_depuis_debut / self._bpm * 60
+##        print ("TEMPS : ", temps_en_s_depuis_debut)
+        return temps_en_s_depuis_debut
 
-        return self.abs_time()*self.division/float(self.tempovalue)
+    def getNotesBetween(self, time0, time1) :
+        notes = []
+        for piste in self._tracks.keys() :
+            for channel in self._tracks[piste]._channels :
+                for note in channel :
+                    if note.timeIn <= time1 and note.timeOut >= time0:
+                        notes.append(note)
+        return notes
+
 
 if __name__ == "__main__" :
     event_handler = OutputMidi()
 
-    in_file = '../files/psy-gangnam_style.mid'
+    in_file = '../../../multimedia/MIDIFILES/LP.mid'
     midi_in = MidiInFile(event_handler, in_file)
     midi_in.read()

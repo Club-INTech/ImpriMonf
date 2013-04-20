@@ -6,6 +6,7 @@ class Note :
         self.timeIn=timeIn
         self.timeOut=timeOut
         self.velocity=velocity
+        self.color="#FF0000"
 
         if not byte is None : self.setByte(byte)
 
@@ -15,6 +16,7 @@ class Note :
         self.number=Note.numbers[byte%12]
         self.octave=byte//12
         self.byte = byte
+
 
     # Cast as String
     def __str__(self) :

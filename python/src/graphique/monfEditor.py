@@ -28,7 +28,7 @@ class MonfEditor(QtGui.QWidget) :
         self.hauteurPiste = 24
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
 
-        self._DST = 2000 #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 50 #Distance, en pixels, correspondant a 1s de musique
 
         if not monf is None : self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
 
@@ -56,17 +56,20 @@ class MonfEditor(QtGui.QWidget) :
         if self._monf is None :
             return
         # Sinon, on continue
-        hauteursNotesPasUtilisees = []
-        # On affiche les coups de poincon
-        for note in self.poincons.keys() :
-            for dist in self.poincons[note] :
+        # On affiche les notes
+        time0, time1 = 0, 1000 # ***** FIXME ******
+        notes = self._monf._morceau.getNotesBetween(time0, time1)
+        for note in notes :
+                    qp.fillRect(self._DST*note.timeIn, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, self.couleurPiste)
 
-                try:
-                    piste = self._monf.noteToPisteNumber[note]
-                    qp.fillRect(self._DST*dist, piste*self.hauteurPiste + 2 , max(1, self.taillePoincon*self._DST), self.hauteurPiste - 4, self.couleurPiste)
-                except KeyError :
-                    if note not in hauteursNotesPasUtilisees : hauteursNotesPasUtilisees.append(note)
-##        print (hauteursNotesPasUtilisees)
+
+class ConteneurMonf(MonfEditor, QtGui.QFrame) :
+    def __init__(self, parent=None, monf=None) :
+        MonfEditor.__init__(self, self, monf)
+        QtGui.QFrame.__init__(self, parent)
+
+    def initialize(self) :
+        pass
 
 
 if __name__ == '__main__':
@@ -74,11 +77,13 @@ if __name__ == '__main__':
 
     sys.path.append("../libMidi")
     sys.path.append("../libMidi/midi")
-##    import monf
-##    monfFile = monf.easyMonf()
+
     import morceau
+    import monf
     m = morceau.Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
     monfFile = m.parseOutput()
+
+
 
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName('monfEditor')
