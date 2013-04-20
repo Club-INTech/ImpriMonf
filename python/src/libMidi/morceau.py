@@ -9,6 +9,7 @@ class Morceau :
         self._ignoredPistes = []
         self._DST = 200   # Distance (en mm) correspondant a 1s de musique
         self._taillePoincon = 3.5 # Escpacement (en mm) entre deux poincons
+        self._precision = 1/10. # PrÃ©cision en nombre de poincons
 
         if not nomFichier is None :
             self._nomFichier = nomFichier
@@ -39,8 +40,16 @@ class Morceau :
                 m.addMonfOneTrack(monfOneTrack)
         return m
 
+    def getNotesBetween(self, time0=None, time1=None) :
+        """
+        Retourne un ensemble de notes compris entre time0 et time1
+        Mettre un des arguments à None revient à ne pas prendre en compte
+        ce paramètre.
+        """
+        return self._output.getNotesBetween(time0, time1)
+
 
 if __name__=="__main__" :
-    m = Morceau("../../../multimedia/MIDIFILES/linkin_park-blackout.mid")
-    m.addIgnoredPiste(10)
+    m = Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
+    print(m.getNotesBetween(5, 10))
     m.parseOutput()

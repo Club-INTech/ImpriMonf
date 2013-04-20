@@ -9,7 +9,7 @@
 # Licence:     WTF
 #-------------------------------------------------------------------------------
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui, QtCore, Qt
 
 class MonfEditor(QtGui.QWidget) :
     def __init__(self, parent=None, monf=None) :
@@ -25,23 +25,27 @@ class MonfEditor(QtGui.QWidget) :
         self.couleurPiste   = QtGui.QColor(200,10,30)
 
         # Longueurs/Hauteurs constantes
-        self.hauteurPiste = 24
+        self.hauteurPiste = 10
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
 
-        self._DST = 2000 #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 50 #Distance, en pixels, correspondant a 1s de musique
 
-        if not monf is None : self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
-
-        self.getPoincons()
+        if not monf is None :
+            self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
+            self.getPoincons()
 
         self.show()
 
     def getPoincons(self) :
         self.poincons = self._monf.getAllPoincons()
-        print (self._monf.getNombrePoincons(self.poincons))
+##        print (self._monf.getNombrePoincons(self.poincons))
+
+    def resize(self, x, y) :
+        self.sizeX , self.sizeY = x, y
+        QtGui.QWidget.resize(self, x, y)
 
     def paintEvent(self, e) :
-        self.resize(self.sizeX, self.sizeY)
+        self.resize(self.parent().width(), self.sizeY)
 
         qp = QtGui.QPainter()
         qp.begin(self)
@@ -56,17 +60,43 @@ class MonfEditor(QtGui.QWidget) :
         if self._monf is None :
             return
         # Sinon, on continue
-        hauteursNotesPasUtilisees = []
-        # On affiche les coups de poincon
-        for note in self.poincons.keys() :
-            for dist in self.poincons[note] :
+        # On affiche les notes
+        time0, time1 = 0, 1000 # ***** FIXME ******
+        notes = self._monf._morceau.getNotesBetween(time0, time1)
+        for note in notes :
+            try :
+                qp.fillRect(self._DST*note.timeIn, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, self.couleurPiste)
+            except KeyError :
+                pass
 
-                try:
-                    piste = self._monf.noteToPisteNumber[note]
-                    qp.fillRect(self._DST*dist, piste*self.hauteurPiste + 2 , max(1, self.taillePoincon*self._DST), self.hauteurPiste - 4, self.couleurPiste)
-                except KeyError :
-                    if note not in hauteursNotesPasUtilisees : hauteursNotesPasUtilisees.append(note)
-##        print (hauteursNotesPasUtilisees)
+    def reloadMonf(self, monf) :
+        self._monf = monf
+        self.update()
+
+class ConteneurMonf(QtGui.QWidget) :
+    def __init__(self, parent=None, monf=None) :
+        QtGui.QWidget.__init__(self, parent)
+        self.layout = QtGui.QVBoxLayout(self)
+        self.barreHorizontale = QtGui.QScrollBar(0x01, self)
+        self.monfEditor = MonfEditor(self, monf)
+
+
+        self.initialize()
+        self.show()
+
+
+    def initialize(self) :
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setMargin(0)
+        self.layout.addWidget(self.barreHorizontale)
+        self.layout.addWidget(self.monfEditor)
+        self.setMinimumSize(200, 200)
+        self.resize(self.monfEditor.sizeX, self.monfEditor.sizeY+self.barreHorizontale.height())
+
+    def reloadMonf(self, monf) :
+        self.monfEditor.reloadMonf(monf)
+
+
 
 
 if __name__ == '__main__':
@@ -74,15 +104,17 @@ if __name__ == '__main__':
 
     sys.path.append("../libMidi")
     sys.path.append("../libMidi/midi")
-##    import monf
-##    monfFile = monf.easyMonf()
+
     import morceau
+    import monf
     m = morceau.Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
     monfFile = m.parseOutput()
 
+
+
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName('monfEditor')
-    win = MonfEditor(monf=monfFile)
-    win.resize(200, 100)
+    win = ConteneurMonf(monf=monfFile)
+##    win.resize(200, 100)
     win.show()
     sys.exit(app.exec_())
