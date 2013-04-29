@@ -65,7 +65,7 @@ class Monf :
 
     def getNumeroPisteOfNote(self, note) :
         """
-        Retourne le numÃ©ro de piste d'une note
+        Retourne le numero de piste d'une note
         """
         return self.noteToPisteNumber[str(note)]
 
@@ -84,8 +84,6 @@ class Monf :
                 notesQuiBugguent.append(str(note))
 
         return notesQuiBugguent
-
-
 
 
 def easyMonf() :

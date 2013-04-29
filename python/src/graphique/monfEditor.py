@@ -96,9 +96,6 @@ class ConteneurMonf(QtGui.QWidget) :
     def reloadMonf(self, monf) :
         self.monfEditor.reloadMonf(monf)
 
-
-
-
 if __name__ == '__main__':
     import sys
 

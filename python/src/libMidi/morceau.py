@@ -9,7 +9,8 @@ class Morceau :
         self._ignoredPistes = []
         self._DST = 200   # Distance (en mm) correspondant a 1s de musique
         self._taillePoincon = 3.5 # Escpacement (en mm) entre deux poincons
-        self._precision = 1/10. # PrÃ©cision en nombre de poincons
+        self._precision = 1/10. # Precision en nombre de poincons
+
 
         if not nomFichier is None :
             self._nomFichier = nomFichier
@@ -40,11 +41,17 @@ class Morceau :
                 m.addMonfOneTrack(monfOneTrack)
         return m
 
+<<<<<<< HEAD
     def getNotesBetween(self, time0=None, time1=None) :
         """
         Retourne un ensemble de notes compris entre time0 et time1
-        Mettre un des arguments à None revient à ne pas prendre en compte
-        ce paramètre.
+        Mettre un des arguments Ã  None revient Ã  ne pas prendre en compte
+        ce paramÃ¨tre.
+=======
+    def getNotesBetween(self, time0, time1) :
+        """
+        Retourne un ensemble de notes compris entre time0 et time1
+>>>>>>> 4e5b919d1b9e383553b42a83c4c851bae162d53a
         """
         return self._output.getNotesBetween(time0, time1)
 
