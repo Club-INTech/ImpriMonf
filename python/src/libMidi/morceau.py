@@ -41,17 +41,13 @@ class Morceau :
                 m.addMonfOneTrack(monfOneTrack)
         return m
 
-<<<<<<< HEAD
+
     def getNotesBetween(self, time0=None, time1=None) :
         """
         Retourne un ensemble de notes compris entre time0 et time1
-        Mettre un des arguments Ã  None revient Ã  ne pas prendre en compte
-        ce paramÃ¨tre.
-=======
-    def getNotesBetween(self, time0, time1) :
-        """
-        Retourne un ensemble de notes compris entre time0 et time1
->>>>>>> 4e5b919d1b9e383553b42a83c4c851bae162d53a
+        Mettre un des arguments a None revient a ne pas prendre en compte
+        ce parametre.
+
         """
         return self._output.getNotesBetween(time0, time1)
 
