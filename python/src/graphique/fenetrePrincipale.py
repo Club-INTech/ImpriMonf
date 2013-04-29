@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------------
 # Name:        module1
 # Purpose:
 #
@@ -63,7 +63,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbar.addAction(nouveauAction)
         toolbar.addAction(openMidiAction)
 
-        # Ajout de l'éditeur de monf
+        # Ajout de l'Ã©diteur de monf
         self.conteneurMonf = ConteneurMonf(self)
 
         self.setCentralWidget(self.conteneurMonf)
