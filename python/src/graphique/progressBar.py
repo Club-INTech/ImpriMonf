@@ -43,7 +43,7 @@ class ProgressBarLoadingMonf(QtGui.QWidget):
         mainLayout.addWidget(texte, 0,0)
 
         self.setLayout(mainLayout)
-        self.setWindowTitle("Processing")
+        self.setWindowTitle("Ça vient, ça vient")
 
         self.thread.add = self.updatePBar
         self.thread.fini = self.fini
@@ -56,6 +56,8 @@ class ProgressBarLoadingMonf(QtGui.QWidget):
     def updatePBar(self, valeur=1):
         self.progressbar.setValue(self.valeurProgression+valeur)
         self.valeurProgression += valeur
+
+
 
 
     def fini(self):

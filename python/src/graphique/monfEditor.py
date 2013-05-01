@@ -27,8 +27,9 @@ class MonfEditor(QtGui.QWidget) :
         # Longueurs/Hauteurs constantes
         self.hauteurPiste = 18
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
+        self.startX = 0
 
-        self._DST = 50 #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 50. #Distance, en pixels, correspondant a 1s de musique
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
@@ -62,12 +63,20 @@ class MonfEditor(QtGui.QWidget) :
         # Sinon, on continue
         # On affiche les notes
         time0, time1 = 0, 1000 # ***** FIXME ******
-        notes = self._monf._morceau.getNotesBetween(time0, time1)
+        notes = self._monf._morceau.getNotesBetween(self.startX-10, self.startX + self.width()/self._DST)
         for note in notes :
             try :
-                qp.fillRect(self._DST*note.timeIn, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, self.couleurPiste)
+                qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, self.couleurPiste)
             except KeyError :
                 pass
+
+    def mousePressEvent(self, event) :
+##        print ("MOUSE D:")
+        pass
+
+    def mouseReleaseEvent(self, event) :
+##        print ("MOUSE RELEASE D:")
+        pass
 
     def reloadMonf(self, monf=None) :
         if monf is None :
@@ -83,8 +92,11 @@ class ConteneurMonf(QtGui.QWidget) :
         self.barreHorizontale = QtGui.QScrollBar(0x01, self)
         self.monfEditor = MonfEditor(self, monf)
 
+        self.barreHorizontale.valueChanged.connect(self.horizontalScrollChanged)
+
 
         self.initialize()
+        self.updateLimits()
         self.show()
 
 
@@ -98,9 +110,22 @@ class ConteneurMonf(QtGui.QWidget) :
 
     def reloadMonf(self, monf=None) :
         self.monfEditor.reloadMonf(monf)
+        self.updateLimits()
 
     def getMonf(self) :
         return self.monfEditor._monf
+
+    def updateLimits(self) :
+        monf = self.getMonf()
+        if not monf is None :
+            print (self.getMonf().getTimeLength())
+            self.barreHorizontale.setRange(-1, self.getMonf().getTimeLength()+3)
+        else :
+            self.barreHorizontale.setRange(-1,1)
+
+    def horizontalScrollChanged(self, value) :
+        self.monfEditor.startX = value
+        self.monfEditor.update()
 
 if __name__ == '__main__':
     import sys

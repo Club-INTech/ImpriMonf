@@ -85,6 +85,11 @@ class Monf :
 
         return notesQuiBugguent
 
+    def getTimeLength(self) :
+        """
+        Retourne le temps total du morceau
+        """
+        return self._morceau.getTimeLength()
 
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """

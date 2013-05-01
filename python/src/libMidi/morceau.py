@@ -51,6 +51,13 @@ class Morceau :
         """
         return self._output.getNotesBetween(time0, time1)
 
+    def getTimeLength(self) :
+        """
+        Retourne le temps total du morceau
+        """
+        notes = self.getNotesBetween()
+        return max(map(lambda a: a.timeOut, notes))
+
 
 if __name__=="__main__" :
     m = Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
