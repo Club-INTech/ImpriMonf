@@ -11,6 +11,7 @@
 
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
+from progressBar import ProgressBarLoadingMonf
 
 import sys
 
@@ -34,16 +35,30 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         nouveauAction.setStatusTip(texte)
         nouveauAction.triggered.connect(self.nouveau)
 
+        # OUVRIR UN FICHIER MONF
+        texte = 'Ouvrir un fichier Monf'
+        openMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-open.png'), texte, self)
+        openMonfAction.setShortcut('Ctrl+O')
+        openMonfAction.setStatusTip(texte)
+        openMonfAction.triggered.connect(self.openMonf)
+
+        # ENREGISTRER UN FICHIER MONF
+        texte = 'Enregistrer au format Monf'
+        saveMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-save.png'), texte, self)
+        saveMonfAction.setShortcut('Ctrl+S')
+        saveMonfAction.setStatusTip(texte)
+        saveMonfAction.triggered.connect(self.saveMonf)
+
         # OUVRIR UN FICHIER SON
         texte = 'Ouvrir un fichier MiDi'
-        openMidiAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-open.png'), texte, self)
-        openMidiAction.setShortcut('Ctrl+O')
+        openMidiAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/import-audio.png'), texte, self)
+        openMidiAction.setShortcut('Ctrl+Shift+O')
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
 
 
         # QUITTER L'APPLICATION
-        texte = 'Quitter l\'Application'
+        texte = 'Quitter l\'application'
         exitAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/close.png'), texte, self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip(texte)
@@ -53,42 +68,73 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.statusbar.showMessage("L'application a été lancée avec succès !")
 
         menubar = self.menuBar()
+
+        # BARS DE MENU
         fileMenu = menubar.addMenu('&Fichier')
         fileMenu.addAction(nouveauAction)
+        fileMenu.addAction(openMonfAction)
+        fileMenu.addAction(saveMonfAction)
+        fileMenu.addSeparator()
         fileMenu.addAction(openMidiAction)
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
 
-        toolbar = self.addToolBar('Barre de Menus')
-        toolbar.addAction(nouveauAction)
-        toolbar.addAction(openMidiAction)
+        # TOOLBARS
+        toolbarMenu = self.addToolBar('Barre de Menus')
+        toolbarMenu.addAction(nouveauAction)
+        toolbarMenu.addAction(openMonfAction)
+        toolbarMenu.addAction(saveMonfAction)
+        toolbarMenu.addSeparator()
+        toolbarMenu.addAction(openMidiAction)
 
-        # Ajout de l'Ã©diteur de monf
+        # Ajout de l'éditeur de monf
         self.conteneurMonf = ConteneurMonf(self)
 
         self.setCentralWidget(self.conteneurMonf)
         self.setWindowTitle('Monf Editor')
+        self.resize(500,500)
         self.show()
 
     # Nouveau fichier.
     def nouveau(self) :
-        pass
+        self.conteneurMonf.reloadMonf()
+
+    # Ouvrir un fichier Monf
+    def openMonf(self) :
+        monfFileName = QtGui.QFileDialog.getOpenFileName(self, "Ouvrir un fichier Monf", filter="Fichiers Monf (*.monf *.monfrini)")
+        if monfFileName is None or monfFileName=="":
+            return
+
+        monf_ = monf.openMonf(monfFileName)
+
+        self.conteneurMonf.reloadMonf(monf_)
+        self.statusbar.showMessage("Fichier Monf " + monfFileName + " ouvert  !")
+
+    # Enregistrer le fichier Monf
+    def saveMonf(self) :
+        monfFileName = QtGui.QFileDialog.getSaveFileNameAndFilter(self, "Enregistrer au format Monf", filter = "Fichiers Monf (*.monf *.monfrini)")
+        if monfFileName == "" :
+            return
+
+        self.conteneurMonf.getMonf().save(monfFileName[0])
+        self.statusbar.showMessage("Fichier Monf " + monfFileName[0] + " sauvegardé  !")
 
     # Action suivant l'ouverture d'un fichier MiDi
     def openMidi(self) :
-        midiFileName = QtGui.QFileDialog.getOpenFileName(self, "Ouvrir un fichier MiDi", filter="Fichiers Midi (*.mid *.midi)")
+        midiFileName = QtGui.QFileDialog.getOpenFileName(self, "Importer un fichier MiDi", filter="Fichiers Midi (*.mid *.midi)")
         if midiFileName is None or midiFileName=="":
             return
 
         morc = morceau.Morceau(midiFileName)
-        monf = morc.parseOutput()
-        notesQuiBugguent = monf.checkForUnprintablePistes()
+        # Lancement de la conversion
+        popup = ProgressBarLoadingMonf(self, morc)
+##        notesQuiBugguent = monf_.checkForUnprintablePistes()
 
-        if notesQuiBugguent != [] :
-            print ("Notes qui buggent :", notesQuiBugguent)
-
-        self.conteneurMonf.reloadMonf(monf)
-        self.statusbar.showMessage("Fichier MiDi " + midiFileName + " ouvert  !")
+##        if notesQuiBugguent != [] :
+##            print ("Notes qui buggent :", notesQuiBugguent)
+##
+##        self.conteneurMonf.reloadMonf(monf_)
+##        self.statusbar.showMessage("Fichier MiDi " + midiFileName + " importé  !")
 
 
 

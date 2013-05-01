@@ -29,7 +29,7 @@ class Morceau :
             raise Exception("La piste a ignorer n'est pas dans les cles des pistes du morceau")
 
     # Doit etre appelle en differe.
-    def parseOutput(self) :
+    def parseOutput(self, progressBar=None) :
         """
         Retourne un objet Monf
         """
@@ -37,7 +37,7 @@ class Morceau :
         m = Monf(self._nomFichier, self)
         for id_track in self._output._tracks.keys() :
             if not id_track in self._ignoredPistes :
-                monfOneTrack = self._output._tracks[id_track].getMonf(self)
+                monfOneTrack = self._output._tracks[id_track].getMonf(self, progressBar)
                 m.addMonfOneTrack(monfOneTrack)
         return m
 

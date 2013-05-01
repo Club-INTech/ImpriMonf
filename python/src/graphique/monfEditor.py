@@ -25,7 +25,7 @@ class MonfEditor(QtGui.QWidget) :
         self.couleurPiste   = QtGui.QColor(200,10,30)
 
         # Longueurs/Hauteurs constantes
-        self.hauteurPiste = 10
+        self.hauteurPiste = 18
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
 
         self._DST = 50 #Distance, en pixels, correspondant a 1s de musique
@@ -69,8 +69,11 @@ class MonfEditor(QtGui.QWidget) :
             except KeyError :
                 pass
 
-    def reloadMonf(self, monf) :
-        self._monf = monf
+    def reloadMonf(self, monf=None) :
+        if monf is None :
+            self._monf = None
+        else :
+            self._monf = monf
         self.update()
 
 class ConteneurMonf(QtGui.QWidget) :
@@ -90,11 +93,14 @@ class ConteneurMonf(QtGui.QWidget) :
         self.layout.setMargin(0)
         self.layout.addWidget(self.barreHorizontale)
         self.layout.addWidget(self.monfEditor)
-        self.setMinimumSize(200, 200)
+        self.setMinimumSize(200, self.monfEditor.sizeY+self.barreHorizontale.height())
         self.resize(self.monfEditor.sizeX, self.monfEditor.sizeY+self.barreHorizontale.height())
 
-    def reloadMonf(self, monf) :
+    def reloadMonf(self, monf=None) :
         self.monfEditor.reloadMonf(monf)
+
+    def getMonf(self) :
+        return self.monfEditor._monf
 
 if __name__ == '__main__':
     import sys

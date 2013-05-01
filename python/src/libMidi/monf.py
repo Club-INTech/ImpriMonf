@@ -111,7 +111,9 @@ def openMonf(filename) :
         import pickle
         obj = pickle.load(file)
         if isinstance(obj,Monf) :
+            print (obj._morceau)
             return obj
+
         else :
             raise Exception("Fichier .monf corronmpu")
 
