@@ -12,6 +12,7 @@
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
 from progressBar import ProgressBarLoadingMonf
+import fenetreAide
 
 import sys
 
@@ -56,13 +57,30 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
 
-
         # QUITTER L'APPLICATION
         texte = 'Quitter l\'application'
         exitAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/close.png'), texte, self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip(texte)
         exitAction.triggered.connect(self.close)
+
+        # OUVRIR L'AIDE
+        texte = 'Aide'
+        aideAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/help-browser.png'), texte, self)
+        aideAction.setShortcut('F1')
+        aideAction.setStatusTip(texte)
+        aideAction.triggered.connect(self.openAide)
+
+        # OUVRIR LES CRÉDITS
+        texte = 'Crédits'
+        creditsAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/system-users.png'), texte, self)
+        creditsAction.setStatusTip(texte)
+        creditsAction.triggered.connect(self.openCredits)
+
+
+
+
+
 
         self.statusbar = self.statusBar()
         self.statusbar.showMessage("L'application a été lancée avec succès !")
@@ -78,6 +96,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fileMenu.addAction(openMidiAction)
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
+
+        aideMenu = menubar.addMenu("&Aide")
+        aideMenu.addAction(aideAction)
+        aideMenu.addAction(creditsAction)
 
         # TOOLBARS
         toolbarMenu = self.addToolBar('Barre de Menus')
@@ -128,19 +150,11 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         morc = morceau.Morceau(midiFileName)
         # Lancement de la conversion
         popup = ProgressBarLoadingMonf(self, morc)
-##        notesQuiBugguent = monf_.checkForUnprintablePistes()
 
-##        if notesQuiBugguent != [] :
-##            print ("Notes qui buggent :", notesQuiBugguent)
-##
-##        self.conteneurMonf.reloadMonf(monf_)
-##        self.statusbar.showMessage("Fichier MiDi " + midiFileName + " importé  !")
-
-
-
-
-
-
+    def openAide(self) :
+        fenetreAide.Aide(self)
+    def openCredits(self) :
+        fenetreAide.Credits(self)
 
 if __name__ == "__main__" :
 

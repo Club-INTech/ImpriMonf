@@ -1,4 +1,6 @@
-﻿class MonfOneTrack :
+﻿import note
+
+class MonfOneTrack :
     """
     Classe MonfOneTrack
 
@@ -37,7 +39,7 @@ class Monf :
             import morceau
             self._morceau = morceau.Morceau()
 
-        self.noteToPisteNumber = {"C3":1, "D3":2, "F3":3, "G3":4, "C4":5, "D4":6, "E4":7, "F4":8, "F#4":9, "G4":10, "A5":11, "A#4":12, "B4":13, "C5":14, "C#5":15, "D5":16, "D#5":17, "E5":18, "F5":19, "F#5":20, "G5":21, "G#5":22, "A5":23, "A#5":24, "B5":25, "C6":26, "D6":27}
+        self.noteToPisteNumber = note.Note.noteToPisteNumber
 
 
     def addMonfOneTrack(self, m) :

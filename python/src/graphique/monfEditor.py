@@ -29,13 +29,14 @@ class MonfEditor(QtGui.QWidget) :
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
         self.startX = 0
 
-        self._DST = 50. #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 500. #Distance, en pixels, correspondant a 1s de musique
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
             self.getPoincons()
 
         self.show()
+        self.setMouseTracking(True)
 
     def getPoincons(self) :
         self.poincons = self._monf.getAllPoincons()
@@ -62,13 +63,29 @@ class MonfEditor(QtGui.QWidget) :
             return
         # Sinon, on continue
         # On affiche les notes
-        time0, time1 = 0, 1000 # ***** FIXME ******
+        #time0, time1 = 0, 1000 # ***** FIXME ******
         notes = self._monf._morceau.getNotesBetween(self.startX-10, self.startX + self.width()/self._DST)
+        self.notesAffichees = notes
+        print (self.notesAffichees)
         for note in notes :
             try :
-                qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, self.couleurPiste)
+                qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, note.color)
             except KeyError :
                 pass
+
+    def getNoteAtPixelPosition(self, pos) :
+        if self._monf is None :
+            return None
+
+        numero_piste = pos.y()//self.hauteurPiste
+        temps = pos.x()/self._DST + self.startX
+
+        self._monf._morceau.getNoteAtPosition(numero_piste, temps, self.notesAffichees)
+
+    def mouseMoveEvent(self, event) :
+
+        self.getNoteAtPixelPosition(event.pos())
+
 
     def mousePressEvent(self, event) :
 ##        print ("MOUSE D:")

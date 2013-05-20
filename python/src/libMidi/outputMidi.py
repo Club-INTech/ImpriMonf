@@ -8,6 +8,7 @@ from piste import Piste
 from note import Note
 
 class OutputMidi(MidiOutStream):
+    colors = [[200,20,0],[20,0,200], [0,20,200], [200,0,20], [0,200,20], [20,200,0], [100,200,100], [200,100,100], [100,100,200], [10,10,100], [10,100,50]]
     def __init__(self) :
         self._tracks = {} #Dico type "id":Piste()
 
@@ -22,8 +23,10 @@ class OutputMidi(MidiOutStream):
 
 
     def start_of_track(self, track) :
+        print (track)
         self.currentTrack = Piste()
         self._tracks[track]=self.currentTrack
+        self.currentTrack.setColor(OutputMidi.colors[len(self._tracks)%len(OutputMidi.colors)])
 
     def sequence_name(self, texte) :
         self.currentTrack.setNom(texte)
@@ -42,6 +45,7 @@ class OutputMidi(MidiOutStream):
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
         ancienneNote = self.currentTrack.getLastNote(channel, note)
         ancienneNote.setTimeOut(self.getCurrentTime())
+        ancienneNote.setColor(*self.currentTrack.color)
 ##        print ("NOTE OFF - ", ancienneNote, self.getCurrentTime(), "CHANNEL :", channel)
 
 
@@ -58,7 +62,26 @@ class OutputMidi(MidiOutStream):
                 for note in channel :
                     if (time1 is None or note.timeIn <= time1) and (time0 is None or note.timeOut >= time0):
                         notes.append(note)
-        return notes
+        notes_ok = []
+        for note in notes :
+            if not note in notes_ok :
+                notes_ok.append(note)
+
+        return notes_ok
+
+    def getNoteAtPosition(self, numero_piste, temps, notesAffichees) :
+        a = 0
+        for note in notesAffichees :
+            try :
+                if Note.noteToPisteNumber[str(note)] == numero_piste :
+                    a += 1
+            except KeyError :
+                pass
+
+        print (a)
+
+
+
 
 
 if __name__ == "__main__" :

@@ -1,5 +1,4 @@
-﻿import time
-from PyQt4 import QtCore, QtGui
+﻿from PyQt4 import QtCore, QtGui
 
 class SleepProgress(QtCore.QThread):
 
@@ -15,23 +14,25 @@ class SleepProgress(QtCore.QThread):
         self.communicate.finir.connect(self.fini)
 
     def run(self):
+        QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
         self.monf = self.morceau.parseOutput(self.communicate)
         self.communicate.finir.emit()
+        QtGui.QApplication.restoreOverrideCursor()
 
 class Communicate(QtCore.QObject) :
     ajouterNote = QtCore.pyqtSignal(int)
     finir = QtCore.pyqtSignal()
 
-class ProgressBarLoadingMonf(QtGui.QWidget):
+class ProgressBarLoadingMonf(QtGui.QDialog):
     def __init__(self, parent, morceau):
-        QtGui.QWidget.__init__(self, None)
+        QtGui.QDialog.__init__(self, None)
         self.parent=parent
         self.morceau = morceau
         self.thread = SleepProgress(morceau)
 
         nombreDeNotes = len(morceau.getNotesBetween())
 
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtGui.QProgressBar(self)
         self.valeurProgression = 0
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(nombreDeNotes)
@@ -49,33 +50,29 @@ class ProgressBarLoadingMonf(QtGui.QWidget):
         self.thread.fini = self.fini
         self.thread.connection()
 
+
         self.thread.start()
 
-        self.show()
+        QtGui.QDialog.exec_(self)
+
+
 
     def updatePBar(self, valeur=1):
         self.progressbar.setValue(self.valeurProgression+valeur)
         self.valeurProgression += valeur
 
-
-
-
     def fini(self):
         self.parent.conteneurMonf.reloadMonf(self.thread.monf)
         self.parent.statusbar.showMessage("Fichier MiDi importé  !")
-        self.close(True)
+        self.reject(True)
         self.thread.quit()
 
-    def close(self, force = False) :
-        if force : QtGui.QWidget.close(self)
-        else : pass
+##    def close(self, force = False) :
+##        if force : QtGui.QDialog.close(self)
+##        else : pass
+    def reject(self, force=False) :
+        if not force :
+            pass
+        else :
+            QtGui.QDialog.reject(self)
 
-
-if __name__ == '__main__':
-    import sys
-    app = QtGui.QApplication(sys.path)
-
-    pbarwin = ProgressBarLoadingMonf()
-    pbarwin.show()
-
-    sys.exit(app.exec_())

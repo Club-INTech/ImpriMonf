@@ -6,6 +6,7 @@ class Piste :
         self._channels = [[]]*16
         self._lastNotes = [[]]*16
         self._nom = ""
+        self.color=[0,0,0]
 
     def addNote(self, channel, noteInstance) :
         self._channels[channel].append(noteInstance)
@@ -22,6 +23,9 @@ class Piste :
         self._nom = nom
     def getNom(self, nom) :
         return self._nom
+
+    def setColor(self, color) :
+        self.color=color
 
     def check(self) :
         for chan in self._channels :
@@ -61,7 +65,7 @@ class Piste :
                     for idPoincon in range(idPoinconIn, idPoinconOut) :
                         m.addPoincon(str(note), idPoincon*dureePoincon)
 
-                if not progressBar is None and notesPassees > 40:
+                if not progressBar is None and notesPassees > 500:
                     progressBar.ajouterNote.emit(notesPassees)
                     notesPassees=0
         if not progressBar is None : progressBar.ajouterNote.emit(notesPassees)
