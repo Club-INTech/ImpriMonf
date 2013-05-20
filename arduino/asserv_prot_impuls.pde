@@ -4,27 +4,30 @@ SimpleTimer timerAsservPWM;
 SimpleTimer timerPasAPas;
 
 /** constantes pour les codeuses **/
-const int pinSignal1 = 2;// pin d'interruption 0 pour le premier signal
-const int pinSignal2 = 3;// pin d'interruption 1 pour le second signal
+const byte pinSignal1 = 2;// pin d'interruption 0 pour le premier signal
+const byte pinSignal2 = 3;// pin d'interruption 1 pour le second signal
 
 /** constantes pour le moteur à courant continu **/
-const int pinDIR = 4;             // pin de direction du moteur à courant continu
-const int pinPWM = 5;             // pin de PWM du moteur à courant continu
-const int frequence_asserv = 150; // fréquence de mise à jour du PWM, en Hz
+const byte pinDIR = 4;                   // pin de direction du moteur à courant continu
+const byte pinPWM = 5;                   // pin de PWM du moteur à courant continu
+const int frequence_asserv = 150;        // fréquence de mise à jour du PWM, en Hz
+const float nb_ticks_1mm = 4.837070254;  //constante de conversion
 
 /** constantes pour le moteur pas à pas **/
-const int pinSENS  = 6;    // pin de sens du moteur pas à pas
-const int pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
-const int pinENABLE = 8;   // pin d'activation du moteur pas à pas
-const int frequence_PasAPas = 630;  // fréquence d'envoi des impulsions au pas à pas, en Hz
+const byte pinSENS  = 6;    // pin de sens du moteur pas à pas
+const byte pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
+const byte pinENABLE = 8;   // pin d'activation du moteur pas à pas
+//const int frequence_PasAPas = 630;  // fréquence d'envoi des impulsions au pas à pas, en Hz
+const int frequence_PasAPas = 700;  // fréquence d'envoi des impulsions au pas à pas, en Hz
 
 /** variables globales, partagées par plusieurs fonctions **/
-int ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
-int consigne_ticks = 0; // consigne reçue de position du moteur à courant continu, en ticks
+long ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
+long consigne_ticks = 0; // consigne reçue de position du moteur à courant continu, en ticks
 //constantes d'asservissement pid
-float kp = 0.16;         // Coefficient proportionnel
+float kp = 50.0;         // Coefficient proportionnel
 float ki = 0.0;         // Coefficient intégrateur
-float kd = 0.3;         // Coefficient dérivateur
+float kd = 0.0;         // Coefficient dérivateur
+byte bridage_pwm = 150;   // Valeur de bridage du PWM
 int pas = 0;            // position du moteur pas à pas depuis le dernier recalage, valeur en pas
 int consigne_pas = 0;   // consigne reçue de position du moteur pas à pas, en pas
 
@@ -106,6 +109,10 @@ void loop(){
   else if (msg == "kd") {
     kd = readLine().toInt()/1000.;
   }
+  //valeur max du PWM (valeur absolue)
+  else if (msg == "vm") {
+    bridage_pwm = readLine().toInt();
+  }
   
   //affichage des constantes d'asservissement
   else if (msg == "?pid") {
@@ -120,7 +127,7 @@ void loop(){
   
   //consigne au moteur à courant continu
   else if (msg == "cm") {
-    consigne_ticks = readLine().toInt();
+    consigne_ticks = readLine().toInt() * nb_ticks_1mm;
   }
   
   //consigne au moteur pas à pas
@@ -128,6 +135,25 @@ void loop(){
     consigne_pas = readLine().toInt();
   }
   
+  //reset des pas
+  else if (msg == "rp") {
+    consigne_pas = 0;
+    pas = 0;
+  }
+  
+  //debug des ticks
+  else if (msg == "ticks") {
+    Serial.print("ticks : ");
+    Serial.print(ticks);
+    Serial.print(", consigne : ");
+    Serial.print(consigne_ticks);
+    Serial.print("\n");
+  }
+  
+  //debug du PWM
+  else if (msg == "pwm") {
+    consigne_ticks = readLine().toInt();
+  }
 }
 
 void update_ticks()
@@ -160,44 +186,45 @@ void update_ticks()
   ticks += sens;
 }
  
-/** Calcul du nouveau PWD avec asservissement PID **/
+/** Calcul du nouveau PWM avec asservissement PID **/
 void asservissementPWM()
 {
-    static int somme_erreur = 0;// pour l'intégrateur
-    static int erreur_precedente = 0;  // pour le dérivateur
+    static long somme_erreur = 0;// pour l'intégrateur
+    static long erreur_precedente = 0;  // pour le dérivateur
     
     // Calcul des erreurs
-    int erreur = consigne_ticks - ticks;
+    long erreur = consigne_ticks - ticks;
     somme_erreur += erreur;
-    int delta_erreur = erreur-erreur_precedente;
+    long delta_erreur = erreur-erreur_precedente;
     erreur_precedente = erreur;
 
     // PID : calcul de la commande
-    int pwd = (int) (kp*erreur + ki*somme_erreur + kd*delta_erreur);
+    long pwm = kp*erreur + ki*somme_erreur + kd*delta_erreur;
  
-    // Normalisation et contrôle du moteur
-    if(pwd < -255)
-        pwd = -255;
-    else if(pwd > 255)
-        pwd = 255;
-    
-    
-    //DEBUG
-    Serial.print(ticks);
-    //Serial.print("\t");
-    //Serial.print(pwd);
-    Serial.print("\n");
-    
-    
-    if(pwd < 0)
-    {
-        digitalWrite(pinDIR, HIGH);
-        analogWrite(pinPWM, -pwd);
-    }
+    // Normalisation du PWM
+    if(pwm < -bridage_pwm)
+        pwm = -bridage_pwm;
+    else if(pwm > bridage_pwm)
+        pwm = bridage_pwm;
+        
+        
+    if(abs(pwm) < kp+5)
+      //évite de forcer inutilement
+      analogWrite(pinPWM, 0);
+      
     else
     {
-        digitalWrite(pinDIR, LOW);
-        analogWrite(pinPWM, pwd);
+      //Contrôle du moteur
+      if(pwm < 0)
+      {
+          digitalWrite(pinDIR, HIGH);
+          analogWrite(pinPWM, -pwm);
+      }
+      else
+      {
+          digitalWrite(pinDIR, LOW);
+          analogWrite(pinPWM, pwm);
+      }
     }
 }
 
