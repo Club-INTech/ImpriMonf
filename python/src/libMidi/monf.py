@@ -1,4 +1,4 @@
-class MonfOneTrack :
+﻿class MonfOneTrack :
     """
     Classe MonfOneTrack
 
@@ -37,7 +37,7 @@ class Monf :
             import morceau
             self._morceau = morceau.Morceau()
 
-        self.noteToPisteNumber = {"A1":1, "A2":2, "A3":3, "A4":4, "A5":5, "A6":6, "A7":7, "A#1":8, "A#2":9, "A#3":10, "A#4":11, "A#5":12, "A#6":13, "A#7":14, "B1":15, "B2":16, "B3":17, "B4":18, "B5":19, "C1":20, "C2":21, "C3":22, "C4":23, "C5":24}
+        self.noteToPisteNumber = {"C3":1, "D3":2, "F3":3, "G3":4, "C4":5, "D4":6, "E4":7, "F4":8, "F#4":9, "G4":10, "A5":11, "A#4":12, "B4":13, "C5":14, "C#5":15, "D5":16, "D#5":17, "E5":18, "F5":19, "F#5":20, "G5":21, "G#5":22, "A5":23, "A#5":24, "B5":25, "C6":26, "D6":27}
 
 
     def addMonfOneTrack(self, m) :
@@ -63,9 +63,37 @@ class Monf :
             a += len(poincons[k])
         return a
 
+    def getNumeroPisteOfNote(self, note) :
+        """
+        Retourne le numero de piste d'une note
+        """
+        return self.noteToPisteNumber[str(note)]
+
+    def save(self, filename) :
+        import pickle
+
+        with open(filename, "wb") as file :
+            pickle.dump(self, file)
+
+    def checkForUnprintablePistes(self) :
+        notes = self._morceau.getNotesBetween()
+        cles = self.noteToPisteNumber.keys()
+        notesQuiBugguent = []
+        for note in notes:
+            if str(note) not in cles :
+                notesQuiBugguent.append(str(note))
+
+        return notesQuiBugguent
+
+    def getTimeLength(self) :
+        """
+        Retourne le temps total du morceau
+        """
+        return self._morceau.getTimeLength()
+
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """
-    monf = Monf()
+    monf = Monf("Test")
     monf1 = MonfOneTrack()
     monf2 = MonfOneTrack()
     monf1.addPoincon("A#", 0.1)
@@ -80,6 +108,26 @@ def easyMonf() :
 
     return monf
 
+def openMonf(filename) :
+    """
+    Fonction a utiliser pour sauvegarder un monf.
+    """
+    with open(filename, "rb") as file :
+        import pickle
+        obj = pickle.load(file)
+        if isinstance(obj,Monf) :
+            print (obj._morceau)
+            return obj
+
+        else :
+            raise Exception("Fichier .monf corronmpu")
+
 if __name__=="__main__" :
     m = easyMonf()
-    print (m.getAllPoincons())
+    m.save("lolcat.monf")
+
+    n = openMonf("lolcat.monf")
+
+
+
+
