@@ -23,8 +23,9 @@ import morceau
 import monf
 
 class FenetrePrincipale(QtGui.QMainWindow) :
-    def __init__(self) :
+    def __init__(self, QApplication) :
         QtGui.QMainWindow.__init__(self)
+        self.app = QApplication
         self.initUID()
 
     def initUID(self) :
@@ -161,7 +162,7 @@ if __name__ == "__main__" :
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName('monfEditor')
 
-    win = FenetrePrincipale()
+    win = FenetrePrincipale(app)
 
     win.show()
     sys.exit(app.exec_())

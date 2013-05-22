@@ -6,15 +6,17 @@ from MidiInFile import MidiInFile
 
 from piste import Piste
 from note import Note
+from modifNote import ModifNote
 
 class OutputMidi(MidiOutStream):
-    colors = [[200,20,0],[20,0,200], [0,20,200], [200,0,20], [0,200,20], [20,200,0], [100,200,100], [200,100,100], [100,100,200], [10,10,100], [10,100,50]]
+    colors = [[200,20,0],[20,0,200], [0,20,200], [200,0,20], [0,200,20], [20,200,0], [100,200,100], [200,100,100], [100,100,200], [10,10,100]]
     def __init__(self) :
         self._tracks = {} #Dico type "id":Piste()
 
     def header(self, format=0, nTracks=1, division=96) :
         self.format = format
         self.nTracks = nTracks
+        print (nTracks)
         self.division = division
 
     def tempo(self, value) :
@@ -37,15 +39,13 @@ class OutputMidi(MidiOutStream):
         pass
 
     def note_on(self, channel=0, note=0x40, velocity=0x40):
-        if velocity == 0 :
-            print ("Ca chie dans la colle pute")
         self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
 ##        print ("ON - ", note, self.getCurrentTime(), self.abs_time(), "CHANNEL :", channel)
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
         ancienneNote = self.currentTrack.getLastNote(channel, note)
         ancienneNote.setTimeOut(self.getCurrentTime())
-        ancienneNote.setColor(*self.currentTrack.color)
+        ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
 ##        print ("NOTE OFF - ", ancienneNote, self.getCurrentTime(), "CHANNEL :", channel)
 
 
@@ -69,19 +69,21 @@ class OutputMidi(MidiOutStream):
 
         return notes_ok
 
+
+
     def getNoteAtPosition(self, numero_piste, temps, notesAffichees) :
-        a = 0
+        lastTimeOut=0
         for note in notesAffichees :
             try :
                 if Note.noteToPisteNumber[str(note)] == numero_piste :
-                    a += 1
+                    """ Ici, on n'a que les notes de la ligne du curseur"""
+                    contains = note.containsTime(temps, .1)
+                    if contains != "OUTSIDE" :
+                        print (contains)
+                        return ModifNote(note, contains)
+
             except KeyError :
                 pass
-
-        print (a)
-
-
-
 
 
 if __name__ == "__main__" :

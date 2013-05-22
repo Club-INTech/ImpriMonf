@@ -65,7 +65,7 @@ class Piste :
                     for idPoincon in range(idPoinconIn, idPoinconOut) :
                         m.addPoincon(str(note), idPoincon*dureePoincon)
 
-                if not progressBar is None and notesPassees > 500:
+                if not progressBar is None and notesPassees > 100:
                     progressBar.ajouterNote.emit(notesPassees)
                     notesPassees=0
         if not progressBar is None : progressBar.ajouterNote.emit(notesPassees)

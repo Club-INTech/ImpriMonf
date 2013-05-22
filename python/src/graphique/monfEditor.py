@@ -29,7 +29,9 @@ class MonfEditor(QtGui.QWidget) :
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
         self.startX = 0
 
-        self._DST = 500. #Distance, en pixels, correspondant a 1s de musique
+        self._DST = 100. #Distance, en pixels, correspondant a 1s de musique
+
+        self.modifNote = None
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
@@ -63,10 +65,8 @@ class MonfEditor(QtGui.QWidget) :
             return
         # Sinon, on continue
         # On affiche les notes
-        #time0, time1 = 0, 1000 # ***** FIXME ******
         notes = self._monf._morceau.getNotesBetween(self.startX-10, self.startX + self.width()/self._DST)
         self.notesAffichees = notes
-        print (self.notesAffichees)
         for note in notes :
             try :
                 qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, note.color)
@@ -74,22 +74,59 @@ class MonfEditor(QtGui.QWidget) :
                 pass
 
     def getNoteAtPixelPosition(self, pos) :
+        """
+        Retourne un objet modifNote contenant la note et la type d'évenement
+        """
         if self._monf is None :
             return None
 
-        numero_piste = pos.y()//self.hauteurPiste
-        temps = pos.x()/self._DST + self.startX
+        temps, numero_piste = self.getTimeAndPisteNumberAtPosition(pos)
 
-        self._monf._morceau.getNoteAtPosition(numero_piste, temps, self.notesAffichees)
+        modif = self._monf._morceau.getNoteAtPosition(numero_piste, temps, self.notesAffichees) # Objet ModifNote ou None
+        return modif
+
+    def getTimeAndPisteNumberAtPosition(self, pos) :
+        temps = pos.x()/self._DST + self.startX
+        numero_piste = pos.y()//self.hauteurPiste
+        return [temps, numero_piste]
 
     def mouseMoveEvent(self, event) :
 
-        self.getNoteAtPixelPosition(event.pos())
+        # modification de position de la note
+        if QtCore.Qt.LeftButton == QtGui.QApplication.mouseButtons() and self.modifNote != None:
+            if self.modifNote.isPosModif() :
+                time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
+                self.modifNote.note.timeIn -= time_diff
+                self.modifNote.note.timeOut -= time_diff
+                self.update()
 
+            elif self.modifNote.type == "BORNEIN" :
+                print ("Borne In Modif")
+                time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
+                self.modifNote.note.timeIn -= time_diff
+                self.modifNote.note.checkTime(priority = "timeIn")
+                self.update()
+
+            elif self.modifNote.type == "BORNEOUT" :
+                time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
+                self.modifNote.note.timeOut -= time_diff
+                self.modifNote.note.checkTime(priority = "timeOut")
+                self.update()
+
+        else :
+            self.modifNote = None
+
+        self.lastMousePos = event.pos()
 
     def mousePressEvent(self, event) :
-##        print ("MOUSE D:")
-        pass
+
+        if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton :
+            modifNote = self.getNoteAtPixelPosition(event.pos())
+            if modifNote is None : return
+            self.modifNote = modifNote
+
+##        elif QtGui.QApplication.mouseButtons() == QtCore.Qt.MidButton :
+##            pass
 
     def mouseReleaseEvent(self, event) :
 ##        print ("MOUSE RELEASE D:")

@@ -62,7 +62,7 @@ class Morceau :
         """
         Retourne la note la plus proche d'une certaine position
         """
-        self._output.getNoteAtPosition(numero_piste, temps, notesAffichees)
+        return self._output.getNoteAtPosition(numero_piste, temps, notesAffichees)
 
 if __name__=="__main__" :
     m = Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
