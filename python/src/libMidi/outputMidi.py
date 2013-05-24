@@ -5,7 +5,7 @@ from MidiOutStream import MidiOutStream
 from MidiInFile import MidiInFile
 
 from piste import Piste
-from note import Note
+from note import Note, isOk
 from modifNote import ModifNote
 
 class OutputMidi(MidiOutStream):
@@ -16,7 +16,6 @@ class OutputMidi(MidiOutStream):
     def header(self, format=0, nTracks=1, division=96) :
         self.format = format
         self.nTracks = nTracks
-        print (nTracks)
         self.division = division
 
     def tempo(self, value) :
@@ -25,7 +24,6 @@ class OutputMidi(MidiOutStream):
 
 
     def start_of_track(self, track) :
-        print (track)
         self.currentTrack = Piste()
         self._tracks[track]=self.currentTrack
         self.currentTrack.setColor(OutputMidi.colors[len(self._tracks)%len(OutputMidi.colors)])
@@ -39,14 +37,14 @@ class OutputMidi(MidiOutStream):
         pass
 
     def note_on(self, channel=0, note=0x40, velocity=0x40):
-        self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
-##        print ("ON - ", note, self.getCurrentTime(), self.abs_time(), "CHANNEL :", channel)
+        if isOk(note) :
+            self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
-        ancienneNote = self.currentTrack.getLastNote(channel, note)
-        ancienneNote.setTimeOut(self.getCurrentTime())
-        ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
-##        print ("NOTE OFF - ", ancienneNote, self.getCurrentTime(), "CHANNEL :", channel)
+        if isOk(note) :
+            ancienneNote = self.currentTrack.getLastNote(channel, note)
+            ancienneNote.setTimeOut(self.getCurrentTime())
+            ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
 
 
     def getCurrentTime(self) :
@@ -79,7 +77,6 @@ class OutputMidi(MidiOutStream):
                     """ Ici, on n'a que les notes de la ligne du curseur"""
                     contains = note.containsTime(temps, .1)
                     if contains != "OUTSIDE" :
-                        print (contains)
                         return ModifNote(note, contains)
 
             except KeyError :

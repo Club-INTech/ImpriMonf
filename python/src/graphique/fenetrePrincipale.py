@@ -9,15 +9,17 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
+import sys
+
+sys.path.append("../libMidi")
+sys.path.append("../libMidi/midi")
+
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
 from progressBar import ProgressBarLoadingMonf
 import fenetreAide
 
-import sys
 
-sys.path.append("../libMidi")
-sys.path.append("../libMidi/midi")
 
 import morceau
 import monf
@@ -115,8 +117,11 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         self.setCentralWidget(self.conteneurMonf)
         self.setWindowTitle('Monf Editor')
-        self.resize(500,500)
+        self.resize(900,500)
         self.show()
+
+    def modificate(self) :
+        pass
 
     # Nouveau fichier.
     def nouveau(self) :

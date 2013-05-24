@@ -11,7 +11,16 @@
 
 from PyQt4 import QtGui, QtCore, Qt
 
+from note import Note
+
 class MonfEditor(QtGui.QWidget) :
+
+    hauteurPiste = 18
+    DST = 100. #Distance, en pixels, correspondant a 1s de musique
+
+    couleurFond = QtGui.QColor(230,230,230)
+    couleurPortee = QtGui.QColor(200,200,200)
+
     def __init__(self, parent=None, monf=None) :
         self._monf = monf
         self._parent = parent
@@ -19,17 +28,13 @@ class MonfEditor(QtGui.QWidget) :
 
         self.sizeX, self.sizeY = 600, 700
 
-        # Couleurs de base
-        self.couleurFond    = QtGui.QColor(230,230,230)
-        self.couleurPortee  = QtGui.QColor(200,200,200)
-        self.couleurPiste   = QtGui.QColor(200,10,30)
 
         # Longueurs/Hauteurs constantes
-        self.hauteurPiste = 18
+        self.hauteurPiste = MonfEditor.hauteurPiste
         self.sizeY = 27*self.hauteurPiste # 27 = nombre de pistes
         self.startX = 0
 
-        self._DST = 100. #Distance, en pixels, correspondant a 1s de musique
+        self._DST = MonfEditor.DST
 
         self.modifNote = None
 
@@ -55,10 +60,10 @@ class MonfEditor(QtGui.QWidget) :
         qp.begin(self)
 
         # Rectangle blanchatre de fond
-        qp.fillRect(0,0, self.sizeX, self.sizeY, QtGui.QBrush(self.couleurFond))
+        qp.fillRect(0,0, self.sizeX, self.sizeY, QtGui.QBrush(MonfEditor.couleurFond))
         # Ajout des portees
         for i in range(27) :
-            qp.fillRect(0,(i+.5)*self.hauteurPiste, self.sizeX, 2, QtGui.QBrush(self.couleurPortee))
+            qp.fillRect(0,(i+.5)*self.hauteurPiste, self.sizeX, 2, QtGui.QBrush(MonfEditor.couleurPortee))
 
         # Si on n'a pas de monf, on s'arrete ici
         if self._monf is None :
@@ -101,7 +106,6 @@ class MonfEditor(QtGui.QWidget) :
                 self.update()
 
             elif self.modifNote.type == "BORNEIN" :
-                print ("Borne In Modif")
                 time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
                 self.modifNote.note.timeIn -= time_diff
                 self.modifNote.note.checkTime(priority = "timeIn")
@@ -139,11 +143,34 @@ class MonfEditor(QtGui.QWidget) :
             self._monf = monf
         self.update()
 
+
+class AfficheurNotes(QtGui.QWidget) :
+    size        = 30
+    textColor   = QtGui.QColor(10,10,0)
+    marge       = 5
+
+    def __init__(self, parent) :
+        self.parent = parent
+        QtGui.QWidget.__init__(self, parent)
+        self.resize(AfficheurNotes.size, parent.height())
+
+    def paintEvent(self, event) :
+        self.resize(50, self.parent.height())
+        qp = QtGui.QPainter()
+        qp.begin(self)
+
+        qp.fillRect(0,0,self.width(),self.height(),MonfEditor.couleurFond)
+
+        for i in range(0,27) :
+            qp.fillRect(0,(i+.5)*MonfEditor.hauteurPiste, self.width(), 2, MonfEditor.couleurPortee.lighter(110))
+            qp.drawText(AfficheurNotes.marge,(i+.75)*MonfEditor.hauteurPiste, Note.pisteNumberToNote[i])
+
 class ConteneurMonf(QtGui.QWidget) :
     def __init__(self, parent=None, monf=None) :
         QtGui.QWidget.__init__(self, parent)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtGui.QGridLayout(self)
         self.barreHorizontale = QtGui.QScrollBar(0x01, self)
+        self.afficheurNotes = AfficheurNotes(self)
         self.monfEditor = MonfEditor(self, monf)
 
         self.barreHorizontale.valueChanged.connect(self.horizontalScrollChanged)
@@ -157,8 +184,14 @@ class ConteneurMonf(QtGui.QWidget) :
     def initialize(self) :
         self.layout.setContentsMargins(0,0,0,0)
         self.layout.setMargin(0)
-        self.layout.addWidget(self.barreHorizontale)
-        self.layout.addWidget(self.monfEditor)
+        self.layout.addWidget(self.barreHorizontale,0,0,1,0)
+        self.layout.addWidget(self.monfEditor,1,1)
+        self.layout.addWidget(self.afficheurNotes, 1,0)
+
+        self.layout.setColumnStretch(0,0)
+        self.layout.setColumnMinimumWidth(0,AfficheurNotes.size)
+        self.layout.setColumnStretch(1,1)
+
         self.setMinimumSize(200, self.monfEditor.sizeY+self.barreHorizontale.height())
         self.resize(self.monfEditor.sizeX, self.monfEditor.sizeY+self.barreHorizontale.height())
 
@@ -172,7 +205,6 @@ class ConteneurMonf(QtGui.QWidget) :
     def updateLimits(self) :
         monf = self.getMonf()
         if not monf is None :
-            print (self.getMonf().getTimeLength())
             self.barreHorizontale.setRange(-1, self.getMonf().getTimeLength()+3)
         else :
             self.barreHorizontale.setRange(-1,1)

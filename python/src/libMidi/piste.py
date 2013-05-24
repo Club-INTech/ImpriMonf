@@ -14,7 +14,14 @@ class Piste :
 
     def getLastNote(self, channel, byteNote) :
         chan, lastNotes = self._channels[channel], self._lastNotes[channel]
-        for noteInstance in self._lastNotes[channel] :
+##        for noteInstance in self._lastNotes[channel] :
+##            if noteInstance.byte == byteNote :
+##                self._lastNotes[channel].remove(noteInstance)
+##                return noteInstance
+
+        nombre_notes = len(self._lastNotes[channel])
+        for i in range(nombre_notes) :
+            noteInstance = self._lastNotes[channel][nombre_notes-i-1]
             if noteInstance.byte == byteNote :
                 self._lastNotes[channel].remove(noteInstance)
                 return noteInstance
