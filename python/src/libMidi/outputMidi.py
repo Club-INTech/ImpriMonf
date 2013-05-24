@@ -38,13 +38,14 @@ class OutputMidi(MidiOutStream):
 
     def note_on(self, channel=0, note=0x40, velocity=0x40):
         if isOk(note) :
-            self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime()))
+            self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime(), color=OutputMidi.colors[channel%len(OutputMidi.colors)]))
+
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
         if isOk(note) :
             ancienneNote = self.currentTrack.getLastNote(channel, note)
             ancienneNote.setTimeOut(self.getCurrentTime())
-            ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
+##            ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
 
 
     def getCurrentTime(self) :

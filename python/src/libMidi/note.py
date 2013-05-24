@@ -6,13 +6,14 @@ class Note :
     pisteNumberToNote = {0:"D7", 1:"C7", 2:"B6", 3:"A#6", 4:"A6", 5:"G#6", 6:"G6", 7:"F#6", 8:"F6", 9:"E6", 10:"D#6", 11:"D6", 12:"C#6", 13:"C6", 14:"B5", 15:"A#5", 16:"A5", 17:"G5", 18:"F#5", 19:"F5", 20:"E5", 21:"D5", 22:"C5", 23:"G4", 24:"F4", 25:"D4", 26:"C4"}
     minimalInterval = .2
 
-    def __init__(self, byte=None, number=None, octave=None, timeIn=0, timeOut=0, velocity=0,) :
+    def __init__(self, byte=None, number=None, octave=None, timeIn=0, timeOut=0, velocity=0,color=None) :
         self.numer=number
         self.octave=octave
         self.timeIn=timeIn
         self.timeOut=timeOut
         self.velocity=velocity
-        self.color = QtGui.QColor(0,255,0)
+        if not color is None : self.color=QtGui.QColor(*color)
+        else : self.color = QtGui.QColor(0,255,0)
 
         if not byte is None : self.setByte(byte)
 
