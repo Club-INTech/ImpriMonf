@@ -28,6 +28,8 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def __init__(self, QApplication) :
         QtGui.QMainWindow.__init__(self)
         self.app = QApplication
+        self.modifie = False
+        self.monfFileName = None
         self.initUID()
 
     def initUID(self) :
@@ -52,6 +54,13 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         saveMonfAction.setShortcut('Ctrl+S')
         saveMonfAction.setStatusTip(texte)
         saveMonfAction.triggered.connect(self.saveMonf)
+
+        # ENREGISTRER SOUS
+        texte = 'Enregistrer sous...'
+        saveAsMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-save-as.png'), texte, self)
+        saveAsMonfAction.setShortcut('Ctrl+Shift+S')
+        saveAsMonfAction.setStatusTip(texte)
+        saveAsMonfAction.triggered.connect(self.saveAs)
 
         # OUVRIR UN FICHIER SON
         texte = 'Ouvrir un fichier MiDi'
@@ -80,11 +89,6 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         creditsAction.setStatusTip(texte)
         creditsAction.triggered.connect(self.openCredits)
 
-
-
-
-
-
         self.statusbar = self.statusBar()
         self.statusbar.showMessage("L'application a été lancée avec succès !")
 
@@ -95,6 +99,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fileMenu.addAction(nouveauAction)
         fileMenu.addAction(openMonfAction)
         fileMenu.addAction(saveMonfAction)
+        fileMenu.addAction(saveAsMonfAction)
         fileMenu.addSeparator()
         fileMenu.addAction(openMidiAction)
         fileMenu.addSeparator()
@@ -109,6 +114,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMenu.addAction(nouveauAction)
         toolbarMenu.addAction(openMonfAction)
         toolbarMenu.addAction(saveMonfAction)
+        toolbarMenu.addAction(saveAsMonfAction)
         toolbarMenu.addSeparator()
         toolbarMenu.addAction(openMidiAction)
 
@@ -120,8 +126,11 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.resize(900,500)
         self.show()
 
+    # Indiquer qu'il y a eu des modifications
     def modificate(self) :
-        pass
+        if not self.modifie :
+            self.modifie = True
+            self.setWindowTitle("* " + self.windowTitle() + " *")
 
     # Nouveau fichier.
     def nouveau(self) :
@@ -129,6 +138,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
     # Ouvrir un fichier Monf
     def openMonf(self) :
+        if not self.askSave() : return
         monfFileName = QtGui.QFileDialog.getOpenFileName(self, "Ouvrir un fichier Monf", filter="Fichiers Monf (*.monf *.monfrini)")
         if monfFileName is None or monfFileName=="":
             return
@@ -138,17 +148,33 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.conteneurMonf.reloadMonf(monf_)
         self.statusbar.showMessage("Fichier Monf " + monfFileName + " ouvert  !")
 
-    # Enregistrer le fichier Monf
-    def saveMonf(self) :
-        monfFileName = QtGui.QFileDialog.getSaveFileNameAndFilter(self, "Enregistrer au format Monf", filter = "Fichiers Monf (*.monf *.monfrini)")
-        if monfFileName == "" :
-            return
+        self.setWindowTitle("Monf Editor - " +  monfFileName)
+        self.modifie = False
+        self.monfFileName = monfFileName
 
-        self.conteneurMonf.getMonf().save(monfFileName[0])
-        self.statusbar.showMessage("Fichier Monf " + monfFileName[0] + " sauvegardé  !")
+    # Enregistrer le fichier Monf
+    def saveMonf(self, forceNewFile=False) :
+        if self.monfFileName is None or forceNewFile:
+            monfFileName = QtGui.QFileDialog.getSaveFileNameAndFilter(self, "Enregistrer au format Monf", filter = "Fichiers Monf (*.monf *.monfrini)")
+            monfFileN = monfFileName[0]
+            if monfFileN == "" : return
+            else : self.monfFileName = monfFileN
+        else :
+            monfFileN = self.monfFileName
+
+        self.conteneurMonf.getMonf().save(monfFileN)
+        self.statusbar.showMessage("Fichier Monf " + monfFileN + " sauvegardé  !")
+
+        self.setWindowTitle("Monf Editor - " +  monfFileN)
+        self.modifie = False
+
+    # Enregistrer Sous
+    def saveAs(self) :
+        self.saveMonf(forceNewFile=True)
 
     # Action suivant l'ouverture d'un fichier MiDi
     def openMidi(self) :
+        if not self.askSave() : return
         midiFileName = QtGui.QFileDialog.getOpenFileName(self, "Importer un fichier MiDi", filter="Fichiers Midi (*.mid *.midi)")
         if midiFileName is None or midiFileName=="":
             return
@@ -157,15 +183,45 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         # Lancement de la conversion
         popup = ProgressBarLoadingMonf(self, morc)
 
+        self.setWindowTitle("Monf Editor - " + midiFileName)
+        self.modificate()
+
+    def askSave(self) :
+        """
+        Retourne True si le script doit continuer, False sinon (=Annuler)
+        S'occupe de sauvegarder si besoin est.
+        """
+        if not self.modifie : return True
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setText("Le fichier a été modifié.")
+        msgBox.setIcon(QtGui.QMessageBox.Question)
+        msgBox.setInformativeText("Voulez-vous sauvegarder les modifications ?")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard | QtGui.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Save)
+        ret = msgBox.exec_()
+
+        if ret == QtGui.QMessageBox.Save :
+            self.saveMonf()
+            return True
+        elif ret == QtGui.QMessageBox.Cancel :
+            return False
+        else :
+            return True
+
+
     def openAide(self) :
         fenetreAide.Aide(self)
     def openCredits(self) :
         fenetreAide.Credits(self)
 
+    def closeEvent(self, event) :
+        if not self.askSave() : event.ignore()
+        else : event.accept()
+
 if __name__ == "__main__" :
 
     app = QtGui.QApplication(sys.argv)
-    app.setApplicationName('monfEditor')
+    app.setApplicationName('Monf Editor')
 
     win = FenetrePrincipale(app)
 

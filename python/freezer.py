@@ -1,5 +1,4 @@
 import sys, os
-import PyQt4
 from cx_Freeze import setup, Executable
 
 
@@ -10,7 +9,8 @@ sys.path.append(os.getcwd())
 
 include_files = []
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["os", "PyQt4"],
+build_exe_options = {"packages": ["os"],
+                     "excludes": ["PyQt4.QtOpenGL", "PyQt4.QtNetwork", "PyQt4.QtScript", "PyQt4.QtSql", "PyQt4.QtSvg", "PyQt4.QtTest", "PyQt4.QtXml"],
                      "include_files":include_files
                      }
 

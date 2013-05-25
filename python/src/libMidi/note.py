@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+﻿from PyQt4 import QtGui
 
 class Note :
     numbers = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -41,9 +41,9 @@ class Note :
 
     def containsTime(self, temps, margin=0) :
         """
-        return "INSIDE" si le temps donnÃƒÂ© en argument est ÃƒÂ  l'intÃƒÂ©rieur de la note
-        return "BORNEIN" ou "BORNEOUT" si le temps donnÃƒÂ© est ÃƒÂ  proximitÃƒÂ© des temps d'entrÃƒÂ©e ou de sortie
-        return "OUTSIDE" si le temps donnÃƒÂ© est complÃƒÂ¨tement HS.
+        return "INSIDE" si le temps donné en argument est à  l'intérieur de la note
+        return "BORNEIN" ou "BORNEOUT" si le temps donné est à proximité des temps d'entrée ou de sortie
+        return "OUTSIDE" si le temps donné est complètement HS.
 
         """
         if self.timeIn+margin <= temps and self.timeOut-margin >= temps : return "INSIDE"
@@ -53,8 +53,8 @@ class Note :
 
     def checkTime(self, priority="timeOut") :
         """
-        Fonction ÃƒÂ  appeller pour vÃƒÂ©rifier que TimeIn et TimeOut sont bien compatibles
-        Priority montre quel est la borne ÃƒÂ  ne pas modifier si besoin est.
+        Fonction à appeller pour vérifier que TimeIn et TimeOut sont bien compatibles
+        Priority montre quel est la borne à ne pas modifier si besoin est.
         """
         if priority=="timeOut":
             if self.timeIn + Note.minimalInterval >= self.timeOut : self.timeOut = self.timeIn + Note.minimalInterval

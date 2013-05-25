@@ -21,6 +21,8 @@ class MonfEditor(QtGui.QWidget) :
     couleurFond = QtGui.QColor(230,230,230)
     couleurPortee = QtGui.QColor(200,200,200)
 
+    margin_interieur_note = 1
+
     def __init__(self, parent=None, monf=None) :
         self._monf = monf
         self._parent = parent
@@ -49,6 +51,9 @@ class MonfEditor(QtGui.QWidget) :
         self.poincons = self._monf.getAllPoincons()
 ##        print (self._monf.getNombrePoincons(self.poincons))
 
+    def getFenetrePrincipale(self) :
+        return self._parent.parent
+
     def resize(self, x, y) :
         self.sizeX , self.sizeY = x, y
         QtGui.QWidget.resize(self, x, y)
@@ -75,6 +80,7 @@ class MonfEditor(QtGui.QWidget) :
         for note in notes :
             try :
                 qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, note.color)
+                qp.fillRect(self._DST*(note.timeIn-self.startX)+MonfEditor.margin_interieur_note, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2+MonfEditor.margin_interieur_note, max(1, self._DST*(note.timeOut - note.timeIn))-2*MonfEditor.margin_interieur_note, self.hauteurPiste - 4-2*MonfEditor.margin_interieur_note, note.color.lighter(170))
             except KeyError :
                 pass
 
@@ -104,22 +110,28 @@ class MonfEditor(QtGui.QWidget) :
                 self.modifNote.note.timeIn -= time_diff
                 self.modifNote.note.timeOut -= time_diff
                 self.update()
+                self.getFenetrePrincipale().modificate()
 
             elif self.modifNote.type == "BORNEIN" :
                 time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
                 self.modifNote.note.timeIn -= time_diff
                 self.modifNote.note.checkTime(priority = "timeIn")
                 self.update()
+                self.getFenetrePrincipale().modificate()
 
             elif self.modifNote.type == "BORNEOUT" :
                 time_diff = self.getTimeAndPisteNumberAtPosition(self.lastMousePos)[0] - self.getTimeAndPisteNumberAtPosition(event.pos())[0]
                 self.modifNote.note.timeOut -= time_diff
                 self.modifNote.note.checkTime(priority = "timeOut")
                 self.update()
+                self.getFenetrePrincipale().modificate()
+
 
         else :
             self.modifNote = None
 
+
+        self.refreshCursor(event.pos())
         self.lastMousePos = event.pos()
 
     def mousePressEvent(self, event) :
@@ -129,12 +141,35 @@ class MonfEditor(QtGui.QWidget) :
             if modifNote is None : return
             self.modifNote = modifNote
 
+        self.refreshCursor(event.pos())
+
 ##        elif QtGui.QApplication.mouseButtons() == QtCore.Qt.MidButton :
 ##            pass
 
     def mouseReleaseEvent(self, event) :
-##        print ("MOUSE RELEASE D:")
-        pass
+        """
+        Relâchement d'un bouton
+        """
+        self.refreshCursor(event.pos())
+
+    def refreshCursor(self, pos) :
+        """
+        S'occupe du rafraîchissement du curseur, passer la position de la souris en argument
+        """
+
+        modifNote = self.getNoteAtPixelPosition(pos)
+        if modifNote is None :
+            self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            return
+
+        if modifNote.isPosModif() :
+            if QtCore.Qt.LeftButton == QtGui.QApplication.mouseButtons() :
+                self.setCursor(QtGui.QCursor(QtCore.Qt.ClosedHandCursor))
+            else :
+                self.setCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+
+        elif modifNote.isSizeModif() : self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
+
 
     def reloadMonf(self, monf=None) :
         if monf is None :
@@ -168,6 +203,7 @@ class AfficheurNotes(QtGui.QWidget) :
 class ConteneurMonf(QtGui.QWidget) :
     def __init__(self, parent=None, monf=None) :
         QtGui.QWidget.__init__(self, parent)
+        self.parent = parent
         self.layout = QtGui.QGridLayout(self)
         self.barreHorizontale = QtGui.QScrollBar(0x01, self)
         self.afficheurNotes = AfficheurNotes(self)
@@ -205,7 +241,7 @@ class ConteneurMonf(QtGui.QWidget) :
     def updateLimits(self) :
         monf = self.getMonf()
         if not monf is None :
-            self.barreHorizontale.setRange(-1, self.getMonf().getTimeLength()+3)
+            self.barreHorizontale.setRange(-1, self.getMonf().getTimeLength())
         else :
             self.barreHorizontale.setRange(-1,1)
 
