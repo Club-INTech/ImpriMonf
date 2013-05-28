@@ -9,11 +9,6 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-import sys
-
-sys.path.append("../libMidi")
-sys.path.append("../libMidi/midi")
-
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
 from progressBar import ProgressBarLoadingMonf
@@ -36,56 +31,72 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         # NOUVEAU MONF
         texte = "Nouveau"
-        nouveauAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-new.png'), texte, self)
+        nouveauAction = QtGui.QAction(QtGui.QIcon('icons/document-new.png'), texte, self)
         nouveauAction.setShortcut('Ctrl+N')
         nouveauAction.setStatusTip(texte)
         nouveauAction.triggered.connect(self.nouveau)
 
         # OUVRIR UN FICHIER MONF
         texte = 'Ouvrir un fichier Monf'
-        openMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-open.png'), texte, self)
+        openMonfAction = QtGui.QAction(QtGui.QIcon('icons/document-open.png'), texte, self)
         openMonfAction.setShortcut('Ctrl+O')
         openMonfAction.setStatusTip(texte)
         openMonfAction.triggered.connect(self.openMonf)
 
         # ENREGISTRER UN FICHIER MONF
         texte = 'Enregistrer au format Monf'
-        saveMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-save.png'), texte, self)
+        saveMonfAction = QtGui.QAction(QtGui.QIcon('icons/document-save.png'), texte, self)
         saveMonfAction.setShortcut('Ctrl+S')
         saveMonfAction.setStatusTip(texte)
         saveMonfAction.triggered.connect(self.saveMonf)
 
         # ENREGISTRER SOUS
         texte = 'Enregistrer sous...'
-        saveAsMonfAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/document-save-as.png'), texte, self)
+        saveAsMonfAction = QtGui.QAction(QtGui.QIcon('icons/document-save-as.png'), texte, self)
         saveAsMonfAction.setShortcut('Ctrl+Shift+S')
         saveAsMonfAction.setStatusTip(texte)
         saveAsMonfAction.triggered.connect(self.saveAs)
 
         # OUVRIR UN FICHIER SON
         texte = 'Ouvrir un fichier MiDi'
-        openMidiAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/import-audio.png'), texte, self)
+        openMidiAction = QtGui.QAction(QtGui.QIcon('icons/import-audio.png'), texte, self)
         openMidiAction.setShortcut('Ctrl+Shift+O')
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
 
+        # ANNULER
+        texte = 'Annuler'
+        annulerAction = QtGui.QAction(QtGui.QIcon('icons/edit-undo.png'), texte, self)
+        annulerAction.setShortcut('Ctrl+Z')
+        annulerAction.setStatusTip(texte)
+        annulerAction.triggered.connect(self.annuler)
+        self.annulerAction = annulerAction
+
+        # REFAIRE
+        texte = 'Refaire'
+        refaireAction = QtGui.QAction(QtGui.QIcon('icons/edit-redo.png'), texte, self)
+        refaireAction.setShortcut('Ctrl+Y')
+        refaireAction.setStatusTip(texte)
+        refaireAction.triggered.connect(self.refaire)
+        self.refaireAction = refaireAction
+
         # QUITTER L'APPLICATION
         texte = 'Quitter l\'application'
-        exitAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/close.png'), texte, self)
+        exitAction = QtGui.QAction(QtGui.QIcon('icons/close.png'), texte, self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip(texte)
         exitAction.triggered.connect(self.close)
 
         # OUVRIR L'AIDE
         texte = 'Aide'
-        aideAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/help-browser.png'), texte, self)
+        aideAction = QtGui.QAction(QtGui.QIcon('icons/help-browser.png'), texte, self)
         aideAction.setShortcut('F1')
         aideAction.setStatusTip(texte)
         aideAction.triggered.connect(self.openAide)
 
         # OUVRIR LES CRÉDITS
         texte = 'Crédits'
-        creditsAction = QtGui.QAction(QtGui.QIcon('../../../multimedia/ICONS/system-users.png'), texte, self)
+        creditsAction = QtGui.QAction(QtGui.QIcon('icons/system-users.png'), texte, self)
         creditsAction.setStatusTip(texte)
         creditsAction.triggered.connect(self.openCredits)
 
@@ -105,6 +116,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
 
+        editMenu = menubar.addMenu("&Edition")
+        editMenu.addAction(annulerAction)
+        editMenu.addAction(refaireAction)
+
         aideMenu = menubar.addMenu("&Aide")
         aideMenu.addAction(aideAction)
         aideMenu.addAction(creditsAction)
@@ -116,6 +131,9 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMenu.addAction(saveMonfAction)
         toolbarMenu.addAction(saveAsMonfAction)
         toolbarMenu.addSeparator()
+        toolbarMenu.addAction(annulerAction)
+        toolbarMenu.addAction(refaireAction)
+        toolbarMenu.addSeparator()
         toolbarMenu.addAction(openMidiAction)
 
         # Ajout de l'éditeur de monf
@@ -124,6 +142,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.setCentralWidget(self.conteneurMonf)
         self.setWindowTitle('Monf Editor')
         self.resize(900,500)
+        self.refreshAnnulerRefaire()
         self.show()
 
     # Indiquer qu'il y a eu des modifications
@@ -134,7 +153,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
     # Nouveau fichier.
     def nouveau(self) :
+        if not self.askSave() : return
         self.conteneurMonf.reloadMonf()
+        self.modifie = False
+        self.refreshAnnulerRefaire()
 
     # Ouvrir un fichier Monf
     def openMonf(self) :
@@ -151,6 +173,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.setWindowTitle("Monf Editor - " +  monfFileName)
         self.modifie = False
         self.monfFileName = monfFileName
+        self.refreshAnnulerRefaire()
 
     # Enregistrer le fichier Monf
     def saveMonf(self, forceNewFile=False) :
@@ -172,6 +195,18 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def saveAs(self) :
         self.saveMonf(forceNewFile=True)
 
+    # Annuler
+    def annuler(self) :
+        self.annulerAction.setEnabled(self.conteneurMonf.monfEditor.controlZ.annuler())
+        self.refaireAction.setEnabled(True)
+        self.conteneurMonf.monfEditor.update()
+
+    # Refaire
+    def refaire(self) :
+        self.refaireAction.setEnabled(self.conteneurMonf.monfEditor.controlZ.refaire())
+        self.annulerAction.setEnabled(True)
+        self.conteneurMonf.monfEditor.update()
+
     # Action suivant l'ouverture d'un fichier MiDi
     def openMidi(self) :
         if not self.askSave() : return
@@ -185,6 +220,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         self.setWindowTitle("Monf Editor - " + midiFileName)
         self.modificate()
+        self.refreshAnnulerRefaire()
 
     def askSave(self) :
         """
@@ -213,6 +249,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fenetreAide.Aide(self)
     def openCredits(self) :
         fenetreAide.Credits(self)
+
+    def refreshAnnulerRefaire(self) :
+        self.annulerAction.setDisabled(True)
+        self.refaireAction.setDisabled(True)
 
     def closeEvent(self, event) :
         if not self.askSave() : event.ignore()

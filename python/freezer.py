@@ -1,13 +1,14 @@
-import sys, os
+﻿import sys, os
 from cx_Freeze import setup, Executable
 
 
 sys.path.append(os.path.join(os.getcwd(), "src/Graphique"))
 sys.path.append(os.path.join(os.getcwd(), "src/libMidi"))
 sys.path.append(os.path.join(os.getcwd(), "src/libMidi/midi"))
+sys.path.append(os.path.join(os.getcwd(), "src"))
 sys.path.append(os.getcwd())
 
-include_files = []
+include_files = ["icons/"]
 # Dependencies are automatically detected, but it might need fine tuning.
 build_exe_options = {"packages": ["os"],
                      "excludes": ["PyQt4.QtOpenGL", "PyQt4.QtNetwork", "PyQt4.QtScript", "PyQt4.QtSql", "PyQt4.QtSvg", "PyQt4.QtTest", "PyQt4.QtXml"],
@@ -27,4 +28,4 @@ setup(  name = "Impri'Monf",
         maintainer="Thibaut REMY",
         description = "Poinçonneur de cartons d'orgue de barbarie",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("src/Graphique/fenetrePrincipale.py", base=base)])
+        executables = [Executable("ImpriMONF.py", base=base)])

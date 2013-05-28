@@ -1,12 +1,14 @@
-import sys
+﻿import sys
 sys.path.append("midi")
 
 from MidiOutStream import MidiOutStream
 from MidiInFile import MidiInFile
 
 from piste import Piste
-from note import Note, isOk
 from modifNote import ModifNote
+
+import morceau, monfEditor
+import note as note_mod
 
 class OutputMidi(MidiOutStream):
     colors = [[200,20,0],[20,0,200], [0,20,200], [200,0,20], [0,200,20], [20,200,0], [100,200,100], [200,100,100], [100,100,200], [10,10,100]]
@@ -21,6 +23,7 @@ class OutputMidi(MidiOutStream):
     def tempo(self, value) :
         self.tempovalue = value
         self._bpm = int (60000000./value)
+        self.temps_dune_noire = self._bpm / 60.
 
 
     def start_of_track(self, track) :
@@ -37,12 +40,12 @@ class OutputMidi(MidiOutStream):
         pass
 
     def note_on(self, channel=0, note=0x40, velocity=0x40):
-        if isOk(note) :
-            self.currentTrack.addNote(channel, Note(byte=note, timeIn=self.getCurrentTime(), color=OutputMidi.colors[channel%len(OutputMidi.colors)]))
+        if note_mod.isOk(note) :
+            self.currentTrack.addNote(channel, note_mod.Note(byte=note, timeIn=self.getCurrentTime(), color=OutputMidi.colors[channel%len(OutputMidi.colors)]))
 
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
-        if isOk(note) :
+        if note_mod.isOk(note) :
             ancienneNote = self.currentTrack.getLastNote(channel, note)
             ancienneNote.setTimeOut(self.getCurrentTime())
 ##            ancienneNote.setColor(*OutputMidi.colors[channel%len(OutputMidi.colors)])
@@ -69,20 +72,23 @@ class OutputMidi(MidiOutStream):
         return notes_ok
 
 
-
     def getNoteAtPosition(self, numero_piste, temps, notesAffichees) :
         lastTimeOut=0
+        modif = None
         for note in notesAffichees :
             try :
-                if Note.noteToPisteNumber[str(note)] == numero_piste :
+                if note_mod.Note.noteToPisteNumber[str(note)] == numero_piste :
                     """ Ici, on n'a que les notes de la ligne du curseur"""
-                    contains = note.containsTime(temps, .1)
+                    pixelLimite = 2
+                    pixelLimite/monfEditor.MonfEditor.DST
+
+                    contains = note.containsTime(temps, pixelLimite/monfEditor.MonfEditor.DST)
                     if contains != "OUTSIDE" :
-                        return ModifNote(note, contains)
+                        modif =  ModifNote(note, contains)
 
             except KeyError :
                 pass
-
+        return modif
 
 if __name__ == "__main__" :
     event_handler = OutputMidi()

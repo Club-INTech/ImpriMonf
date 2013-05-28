@@ -5,12 +5,14 @@ from MidiInFile import MidiInFile
 from outputMidi import OutputMidi
 
 class Morceau :
+    DST             = 50 # Distance (en mm) correspondant a 1s de musique
+    taillePoincon   = 3.5 # Escpacement (en mm) entre deux poincons
+    precision       = .1  # Precision en nombre de poincons
     def __init__(self, nomFichier=None) :
         self._ignoredPistes = []
-        self._DST = 200   # Distance (en mm) correspondant a 1s de musique
-        self._taillePoincon = 3.5 # Escpacement (en mm) entre deux poincons
-        self._precision = 1/10. # Precision en nombre de poincons
-
+        self._DST           = Morceau.DST
+        self._taillePoincon = Morceau.taillePoincon
+        self._precision     = Morceau.precision
 
         if not nomFichier is None :
             self._nomFichier = nomFichier

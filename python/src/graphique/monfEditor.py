@@ -12,11 +12,12 @@
 from PyQt4 import QtGui, QtCore, Qt
 
 from note import Note
+from controlZ import ControlZ, Action
 
 class MonfEditor(QtGui.QWidget) :
 
     hauteurPiste = 18
-    DST = 100. #Distance, en pixels, correspondant a 1s de musique
+    DST = 200. #Distance, en pixels, correspondant a 1s de musique
 
     couleurFond = QtGui.QColor(230,230,230)
     couleurPortee = QtGui.QColor(200,200,200)
@@ -39,6 +40,7 @@ class MonfEditor(QtGui.QWidget) :
         self._DST = MonfEditor.DST
 
         self.modifNote = None
+        self.controlZ = ControlZ()
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
@@ -74,13 +76,33 @@ class MonfEditor(QtGui.QWidget) :
         if self._monf is None :
             return
         # Sinon, on continue
+
+        timeLeft = self.startX
+        timeRight = self.startX + self.width()/MonfEditor.DST
+
+
+
+        # Repères verticaux
+        temps_noire = self._monf._morceau._output.temps_dune_noire
+        for i in range(int(timeLeft//temps_noire), int(timeRight//temps_noire)+1) :
+            temps_du_temps = i*temps_noire
+            qp.fillRect(MonfEditor.DST*(temps_du_temps-self.startX), 0, 2, self.height(), QtGui.QColor(150,150,170))
+
         # On affiche les notes
-        notes = self._monf._morceau.getNotesBetween(self.startX-10, self.startX + self.width()/self._DST)
+        notes = self._monf._morceau.getNotesBetween(timeLeft-10, timeRight)
         self.notesAffichees = notes
+
+
         for note in notes :
             try :
-                qp.fillRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4, note.color)
-                qp.fillRect(self._DST*(note.timeIn-self.startX)+MonfEditor.margin_interieur_note, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2+MonfEditor.margin_interieur_note, max(1, self._DST*(note.timeOut - note.timeIn))-2*MonfEditor.margin_interieur_note, self.hauteurPiste - 4-2*MonfEditor.margin_interieur_note, note.color.lighter(170))
+                couleur = note.color.darker(140)
+                couleurInterieur = note.color.lighter(130)
+                couleurInterieur.setAlpha(127)
+
+                qp.setBrush(couleurInterieur)
+                qp.setPen(couleur)
+##                qp.drawRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4)
+                qp.drawRect(MonfEditor.DST*(note.timeIn-self.startX)+MonfEditor.margin_interieur_note, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2+MonfEditor.margin_interieur_note, max(1, MonfEditor.DST*(note.timeOut - note.timeIn))-2*MonfEditor.margin_interieur_note, self.hauteurPiste - 4-2*MonfEditor.margin_interieur_note)
             except KeyError :
                 pass
 
@@ -97,7 +119,7 @@ class MonfEditor(QtGui.QWidget) :
         return modif
 
     def getTimeAndPisteNumberAtPosition(self, pos) :
-        temps = pos.x()/self._DST + self.startX
+        temps = pos.x()/MonfEditor.DST + self.startX
         numero_piste = pos.y()//self.hauteurPiste
         return [temps, numero_piste]
 
@@ -140,17 +162,36 @@ class MonfEditor(QtGui.QWidget) :
             modifNote = self.getNoteAtPixelPosition(event.pos())
             if modifNote is None : return
             self.modifNote = modifNote
+            self.modifNote.note.backupTimes()
 
         self.refreshCursor(event.pos())
 
 ##        elif QtGui.QApplication.mouseButtons() == QtCore.Qt.MidButton :
 ##            pass
 
+
     def mouseReleaseEvent(self, event) :
         """
         Relâchement d'un bouton
         """
         self.refreshCursor(event.pos())
+
+        if self.modifNote is None : return
+
+        note = self.modifNote.note
+        self.controlZ.addAction(Action(note, ["timeIn", "timeOut"], self.modifNote.note.getBackup(), [self.modifNote.note.timeIn, self.modifNote.note.timeOut]))
+        self._parent.parent.annulerAction.setEnabled(True)
+
+    def wheelEvent(self, event) :
+        """
+        Roulette
+        """
+        fac = .1
+        MonfEditor.DST += event.delta()*fac
+
+        if MonfEditor.DST > 500 : MonfEditor.DST=500
+        elif MonfEditor.DST < 20 : MonfEditor.DST = 20
+        self.update()
 
     def refreshCursor(self, pos) :
         """
@@ -161,6 +202,7 @@ class MonfEditor(QtGui.QWidget) :
         if modifNote is None :
             self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
             return
+
 
         if modifNote.isPosModif() :
             if QtCore.Qt.LeftButton == QtGui.QApplication.mouseButtons() :
@@ -177,6 +219,7 @@ class MonfEditor(QtGui.QWidget) :
         else :
             self._monf = monf
         self.update()
+        self.controlZ = ControlZ()
 
 
 class AfficheurNotes(QtGui.QWidget) :
@@ -187,10 +230,9 @@ class AfficheurNotes(QtGui.QWidget) :
     def __init__(self, parent) :
         self.parent = parent
         QtGui.QWidget.__init__(self, parent)
-        self.resize(AfficheurNotes.size, parent.height())
 
     def paintEvent(self, event) :
-        self.resize(50, self.parent.height())
+        self.resize(AfficheurNotes.size, self.parent.height())
         qp = QtGui.QPainter()
         qp.begin(self)
 
@@ -220,9 +262,9 @@ class ConteneurMonf(QtGui.QWidget) :
     def initialize(self) :
         self.layout.setContentsMargins(0,0,0,0)
         self.layout.setMargin(0)
-        self.layout.addWidget(self.barreHorizontale,0,0,1,0)
-        self.layout.addWidget(self.monfEditor,1,1)
-        self.layout.addWidget(self.afficheurNotes, 1,0)
+        self.layout.addWidget(self.barreHorizontale,1,1)
+        self.layout.addWidget(self.monfEditor,0,1)
+        self.layout.addWidget(self.afficheurNotes, 0,0)
 
         self.layout.setColumnStretch(0,0)
         self.layout.setColumnMinimumWidth(0,AfficheurNotes.size)
