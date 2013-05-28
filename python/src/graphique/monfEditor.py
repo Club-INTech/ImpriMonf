@@ -42,6 +42,8 @@ class MonfEditor(QtGui.QWidget) :
         self.modifNote = None
         self.controlZ = ControlZ()
 
+        self.infoBulle = InfoBulle()
+
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
             self.getPoincons()
@@ -62,16 +64,19 @@ class MonfEditor(QtGui.QWidget) :
         QtGui.QWidget.resize(self, x, y)
 
     def paintEvent(self, e) :
-        self.resize(self.parent().width(), self.sizeY)
 
+        self.resize(self.parent().width(), self.sizeY)
         qp = QtGui.QPainter()
         qp.begin(self)
+
+
 
         # Rectangle blanchatre de fond
         qp.fillRect(0,0, self.sizeX, self.sizeY, QtGui.QBrush(MonfEditor.couleurFond))
         # Ajout des portees
         for i in range(27) :
             qp.fillRect(0,(i+.5)*self.hauteurPiste, self.sizeX, 2, QtGui.QBrush(MonfEditor.couleurPortee))
+
 
         # Si on n'a pas de monf, on s'arrete ici
         if self._monf is None :
@@ -80,8 +85,6 @@ class MonfEditor(QtGui.QWidget) :
 
         timeLeft = self.startX
         timeRight = self.startX + self.width()/MonfEditor.DST
-
-
 
         # Repères verticaux
         temps_noire = self._monf._morceau._output.temps_dune_noire
@@ -103,7 +106,11 @@ class MonfEditor(QtGui.QWidget) :
         if self.currentNote != None :
             self.drawNote(qp, self.currentNote, option="ALPHA")
 
-    def drawNote(self, qp, note, option=None):
+        # On affiche l'info-bulle
+        self.infoBulle.update(qp)
+
+
+    def drawNote(self,qp, note, option=None):
         couleur = note.color.darker(140)
         couleur.setAlpha(200)
         couleurInterieur = note.color.lighter(130)
@@ -161,14 +168,13 @@ class MonfEditor(QtGui.QWidget) :
                 self.modifNote.note.checkTime(priority = "timeOut")
                 self.update()
                 self.getFenetrePrincipale().modificate()
-
-
         else :
             self.modifNote = None
-
+            self.refreshInfoBulle(event.pos())
 
         self.refreshCursor(event.pos())
         self.lastMousePos = event.pos()
+        self.update()
 
     def mousePressEvent(self, event) :
 
@@ -180,6 +186,7 @@ class MonfEditor(QtGui.QWidget) :
             self.modifNote.note.backupTimes()
 
         self.refreshCursor(event.pos())
+        self.refreshInfoBulle(event.pos())
 
 ##        elif QtGui.QApplication.mouseButtons() == QtCore.Qt.MidButton :
 ##            pass
@@ -198,7 +205,9 @@ class MonfEditor(QtGui.QWidget) :
             self.controlZ.addAction(Action(note, ["timeIn", "timeOut"], self.modifNote.note.getBackup(), [self.modifNote.note.timeIn, self.modifNote.note.timeOut]))
             self._parent.parent.annulerAction.setEnabled(True)
 
+
         self.currentNote = None
+        self.refreshInfoBulle(event.pos())
         self.update()
 
     def wheelEvent(self, event) :
@@ -231,6 +240,30 @@ class MonfEditor(QtGui.QWidget) :
 
         elif modifNote.isSizeModif() : self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
 
+    def refreshInfoBulle(self, cursorpos) :
+        # note
+        modifNote = self.getNoteAtPixelPosition(cursorpos)
+
+        if modifNote is None :
+            self.endInfoBulle()
+            return
+
+        self.infoBulle.note = modifNote.note
+
+        # position de l'infobulle
+        position = cursorpos
+        if position.x() <= self.width()/2 and position.y() <= self.height()/2 : position = position+QtCore.QPoint(10,10)
+        elif position.x() > self.width()/2 and position.y() <= self.height()/2 : position = position+QtCore.QPoint(-InfoBulle.sizeX - 10, 10)
+        elif position.x() <= self.width()/2 and position.y() > self.height()/2 : position = position+QtCore.QPoint(10,-InfoBulle.sizeY -10)
+        else : position = position+QtCore.QPoint(-InfoBulle.sizeX -10,-InfoBulle.sizeY-10)
+        self.infoBulle.setPosition(position)
+
+    def endInfoBulle(self) :
+        self.infoBulle.note = None
+
+    def leaveEvent(self, event) :
+        self.endInfoBulle()
+        self.update()
 
     def reloadMonf(self, monf=None) :
         if monf is None :
@@ -239,6 +272,82 @@ class MonfEditor(QtGui.QWidget) :
             self._monf = monf
         self.update()
         self.controlZ = ControlZ()
+
+class InfoBulle :
+    sizeX = 120
+    sizeY = 85
+    epaisseurBordureBord = 1
+    epaisseurBord = 5
+    margin = 3
+
+    epaisseurTitre = 13
+    couleurTitre = QtGui.QColor(180,40,0,100)
+
+    couleurFond = QtGui.QColor(230,230,230)
+
+    def __init__(self) :
+        self.x = 0
+        self.y = 0
+        self.note = None
+
+    def update(self, qp) :
+        if not self.note is None :
+            # Pinceau pour le fond
+            couleur = self.note.color
+
+            couleurBord = couleur.darker(120)
+            couleurFondBordure = couleur.lighter(130)
+            couleurFondBordure.setAlpha(100)
+            pen = QtGui.QPen(couleurBord)
+            pen.setWidthF(InfoBulle.epaisseurBordureBord)
+            qp.setBrush(couleurFondBordure)
+            qp.setPen(pen)
+            qp.drawRoundedRect(self.x, self.y, InfoBulle.sizeX, InfoBulle.sizeY, InfoBulle.epaisseurBord, InfoBulle.epaisseurBord)
+
+            # fond titre
+##            qp.fillRect(self.x+InfoBulle.epaisseurBord, self.y+InfoBulle.epaisseurBord, InfoBulle.sizeX-2*InfoBulle.epaisseurBord, InfoBulle.epaisseurTitre, InfoBulle.couleurTitre)
+
+            # titre
+            titre   = "♫ Note : "
+            pen     = QtGui.QPen(QtGui.QColor(0,0,0))
+
+            font = QtGui.QFont()
+            font.setBold(True)
+            font.setCapitalization(True)
+            qp.setPen(pen)
+            qp.setFont(font)
+            qp.drawText(QtCore.QPointF(self.x + InfoBulle.epaisseurBord + 10, self.y + InfoBulle.epaisseurBord + InfoBulle.epaisseurTitre/2+2), titre)
+
+            fontMetrics = QtGui.QFontMetrics(font)
+            fontSize = fontMetrics.boundingRect(titre).width()
+            font.setBold(False)
+            font.setItalic(True)
+            qp.setFont(font)
+            qp.drawText(QtCore.QPointF(self.x + InfoBulle.epaisseurBord + 10+fontSize+InfoBulle.margin, self.y + InfoBulle.epaisseurBord + InfoBulle.epaisseurTitre/2+2), str(self.note))
+
+            # fond
+            qp.fillRect(self.x+InfoBulle.epaisseurBord, self.y+InfoBulle.epaisseurBord+InfoBulle.epaisseurTitre, InfoBulle.sizeX-2*InfoBulle.epaisseurBord, InfoBulle.sizeY-2*InfoBulle.epaisseurBord-InfoBulle.epaisseurTitre, InfoBulle.couleurFond)
+
+            # texte
+            font.setItalic(False)
+            font.setCapitalization(False)
+            qp.setFont(font)
+            y_debut = self.y + InfoBulle.epaisseurBord + InfoBulle.epaisseurTitre + 12
+            x_debut = self.x + InfoBulle.epaisseurBord + 10
+            fontMetrics = QtGui.QFontMetrics(font)
+            deltaY = fontMetrics.height() + InfoBulle.margin
+            qp.drawText(QtCore.QPointF(x_debut, y_debut), "Hauteur : " + str(self.note))
+            qp.drawText(QtCore.QPointF(x_debut, y_debut+deltaY), "Durée : " + "%.3f" % (self.note.timeOut - self.note.timeIn) + "s")
+            qp.drawText(QtCore.QPointF(x_debut, y_debut+2*deltaY), "Début : " + "%.2f" % (self.note.timeIn) + "s")
+            qp.drawText(QtCore.QPointF(x_debut, y_debut+3*deltaY), "Fin : " + "%.2f" % (self.note.timeOut) + "s")
+
+
+
+    def setPosition(self, pos) :
+        self.x, self.y = pos.x(), pos.y()
+
+
+
 
 
 class AfficheurNotes(QtGui.QWidget) :
