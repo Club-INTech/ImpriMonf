@@ -7,7 +7,7 @@ class Note :
     pisteNumberToNote = {0:"D7", 1:"C7", 2:"B6", 3:"A#6", 4:"A6", 5:"G#6", 6:"G6", 7:"F#6", 8:"F6", 9:"E6", 10:"D#6", 11:"D6", 12:"C#6", 13:"C6", 14:"B5", 15:"A#5", 16:"A5", 17:"G5", 18:"F#5", 19:"F5", 20:"E5", 21:"D5", 22:"C5", 23:"G4", 24:"F4", 25:"D4", 26:"C4"}
     minimalInterval = morceau.Morceau.taillePoincon /morceau.Morceau.DST
 
-    def __init__(self, byte=None, number=None, octave=None, timeIn=0, timeOut=0, velocity=0,color=None) :
+    def __init__(self, byte=None, number=None, octave=None, timeIn=0, timeOut=0, velocity=0,color=None, QColor=None) :
         self.numer=number
         self.octave=octave
         self.timeIn=timeIn
@@ -16,7 +16,8 @@ class Note :
         self.lastTimeIn = timeIn
         self.lastTimeOut = timeOut
         self.velocity=velocity
-        if not color is None : self.color=QtGui.QColor(*color)
+        if not color is None and QColor is None: self.color=QtGui.QColor(*color)
+        elif not QColor is None : self.color=QColor
         else : self.color = QtGui.QColor(0,255,0)
 
         if not byte is None : self.setByte(byte)
@@ -70,6 +71,9 @@ class Note :
         self.lastTimeOut = self.timeOut
     def getBackup(self) :
         return [self.lastTimeIn, self.lastTimeOut]
+
+    def copy(self) :
+        return Note(self.byte, self.number, self.octave, self.timeIn, self.timeOut, self.velocity, QColor = self.color)
 
 def isOk(bytenote) :
     testNote = Note()

@@ -48,6 +48,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.show()
         self.setMouseTracking(True)
+        self.currentNote = None
 
     def getPoincons(self) :
         self.poincons = self._monf.getAllPoincons()
@@ -95,16 +96,29 @@ class MonfEditor(QtGui.QWidget) :
 
         for note in notes :
             try :
-                couleur = note.color.darker(140)
-                couleurInterieur = note.color.lighter(130)
-                couleurInterieur.setAlpha(127)
-
-                qp.setBrush(couleurInterieur)
-                qp.setPen(couleur)
-##                qp.drawRect(self._DST*(note.timeIn-self.startX), self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2 , max(1, self._DST*(note.timeOut - note.timeIn)), self.hauteurPiste - 4)
-                qp.drawRect(MonfEditor.DST*(note.timeIn-self.startX)+MonfEditor.margin_interieur_note, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2+MonfEditor.margin_interieur_note, max(1, MonfEditor.DST*(note.timeOut - note.timeIn))-2*MonfEditor.margin_interieur_note, self.hauteurPiste - 4-2*MonfEditor.margin_interieur_note)
+                self.drawNote(qp, note)
             except KeyError :
                 pass
+
+        if self.currentNote != None :
+            self.drawNote(qp, self.currentNote, option="ALPHA")
+
+    def drawNote(self, qp, note, option=None):
+        couleur = note.color.darker(140)
+        couleur.setAlpha(200)
+        couleurInterieur = note.color.lighter(130)
+        couleurInterieur.setAlpha(127)
+
+        if option=="ALPHA" :
+            couleurInterieur.setAlpha(80)
+            couleur.setAlpha(80)
+
+        pen = QtGui.QPen(couleur)
+        pen.setWidthF(1.5)
+
+        qp.setBrush(couleurInterieur)
+        qp.setPen(pen)
+        qp.drawRoundedRect(MonfEditor.DST*(note.timeIn-self.startX)+MonfEditor.margin_interieur_note, self._monf.getNumeroPisteOfNote(note)*self.hauteurPiste + 2+MonfEditor.margin_interieur_note, max(1, MonfEditor.DST*(note.timeOut - note.timeIn))-2*MonfEditor.margin_interieur_note, self.hauteurPiste - 4-2*MonfEditor.margin_interieur_note, 4,4)
 
     def getNoteAtPixelPosition(self, pos) :
         """
@@ -162,6 +176,7 @@ class MonfEditor(QtGui.QWidget) :
             modifNote = self.getNoteAtPixelPosition(event.pos())
             if modifNote is None : return
             self.modifNote = modifNote
+            self.currentNote = modifNote.note.copy()
             self.modifNote.note.backupTimes()
 
         self.refreshCursor(event.pos())
@@ -179,8 +194,12 @@ class MonfEditor(QtGui.QWidget) :
         if self.modifNote is None : return
 
         note = self.modifNote.note
-        self.controlZ.addAction(Action(note, ["timeIn", "timeOut"], self.modifNote.note.getBackup(), [self.modifNote.note.timeIn, self.modifNote.note.timeOut]))
-        self._parent.parent.annulerAction.setEnabled(True)
+        if not [self.modifNote.note.timeIn, self.modifNote.note.timeOut] == self.modifNote.note.getBackup() :
+            self.controlZ.addAction(Action(note, ["timeIn", "timeOut"], self.modifNote.note.getBackup(), [self.modifNote.note.timeIn, self.modifNote.note.timeOut]))
+            self._parent.parent.annulerAction.setEnabled(True)
+
+        self.currentNote = None
+        self.update()
 
     def wheelEvent(self, event) :
         """
