@@ -23,7 +23,7 @@ class OutputMidi(MidiOutStream):
     def tempo(self, value) :
         self.tempovalue = value
         self._bpm = int (60000000./value)
-        self.temps_dune_noire = self._bpm / 60.
+        self.temps_dune_noire = 60./self._bpm
 
 
     def start_of_track(self, track) :
@@ -56,6 +56,21 @@ class OutputMidi(MidiOutStream):
         temps_en_s_depuis_debut = nombre_de_noires_depuis_debut / self._bpm * 60
 ##        print ("TEMPS : ", temps_en_s_depuis_debut)
         return temps_en_s_depuis_debut
+
+    def time_signature(self,  nn, dd, cc, bb) :
+        """
+        nn: Numerator of the signature as notated on sheet music
+        dd: Denominator of the signature as notated on sheet music
+            The denominator is a negative power of 2: 2 = quarter
+            note, 3 = eighth, etc.
+        cc: The number of MIDI clocks in a metronome click
+        bb: The number of notated 32nd notes in a MIDI quarter note
+            (24 MIDI clocks)
+        """
+        self.nn = nn
+        self.dd = dd
+        self.cc = cc
+        self.bb = bb
 
     def getNotesBetween(self, time0=None, time1=None) :
         notes = []

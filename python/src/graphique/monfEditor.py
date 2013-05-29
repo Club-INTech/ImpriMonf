@@ -371,6 +371,7 @@ class AfficheurNotes(QtGui.QWidget) :
             qp.drawText(AfficheurNotes.marge,(i+.75)*MonfEditor.hauteurPiste, Note.pisteNumberToNote[i])
 
 class ConteneurMonf(QtGui.QWidget) :
+    precision = 10
     def __init__(self, parent=None, monf=None) :
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
@@ -411,12 +412,13 @@ class ConteneurMonf(QtGui.QWidget) :
     def updateLimits(self) :
         monf = self.getMonf()
         if not monf is None :
-            self.barreHorizontale.setRange(-1, self.getMonf().getTimeLength())
+            self.barreHorizontale.setRange(0, self.getMonf().getTimeLength()*ConteneurMonf.precision)
+            self.barreHorizontale.setPageStep(10*ConteneurMonf.precision)
         else :
-            self.barreHorizontale.setRange(-1,1)
+            self.barreHorizontale.setRange(0,1)
 
     def horizontalScrollChanged(self, value) :
-        self.monfEditor.startX = value
+        self.monfEditor.startX = value/ConteneurMonf.precision
         self.monfEditor.update()
 
 if __name__ == '__main__':
