@@ -17,8 +17,12 @@ const float nb_ticks_1mm = 4.837070254;  //constante de conversion
 const byte pinSENS  = 6;    // pin de sens du moteur pas à pas
 const byte pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
 const byte pinENABLE = 8;   // pin d'activation du moteur pas à pas
-const int frequence_PasAPas = 700;     // fréquence d'envoi des impulsions au pas à pas, en Hz
-const float nb_pas_1mm = 100.60362173; //constante de conversion
+const int frequence_PasAPas = 650;     // fréquence d'envoi des impulsions au pas à pas, en Hz
+const float nb_pas_1mm = 100.352113; //constante de conversion
+
+/** constantes pour les distributeurs **/
+const byte pinBaisseVerin = 9;
+const byte pinLeveVerin = 10;
 
 /** variables globales, partagées par plusieurs fonctions **/
 long ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
@@ -52,8 +56,10 @@ void setup() {
     pinMode(pinPWM,  OUTPUT);
     pinMode(pinDIR,  OUTPUT);
     pinMode(pinSENS, OUTPUT);
-    pinMode(pinCLOCK,OUTPUT);
-    pinMode(pinENABLE,OUTPUT);
+    pinMode(pinCLOCK, OUTPUT);
+    pinMode(pinENABLE, OUTPUT);
+    pinMode(pinBaisseVerin, OUTPUT);
+    pinMode(pinLeveVerin, OUTPUT);
     
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
@@ -87,42 +93,38 @@ String readLine()
       inChar = Serial.read();
     }
   }
+  Serial.println("_");
   return inString;
 }
 
 /** Boucle principale (protocole série) **/
 void loop(){
   String msg = readLine();
-  
-  //ping
+   
+  ////// PROTOCOLE FINAL //////////
+  //identification de la carte
   if (msg == "?") {
     Serial.println("#");
   }
   
-  //valeur max du PWM (valeur absolue)
-  else if (msg == "vm") {
-    bridage_pwm = readLine().toInt();
-  }
-  
-  //consigne au moteur à courant continu
-  else if (msg == "cm") {
-    consigne_ticks = (readLine().toInt() / 1000.0) * nb_ticks_1mm;
-  }
-  
-  //consigne au moteur pas à pas
-  else if (msg == "cp") {
-    consigne_pas = (readLine().toInt() / 1000.0) * nb_pas_1mm;
-  }
-  
   //reset des pas
-  else if (msg == "rp") {
+  else if (msg == "reset_pap") {
     consigne_pas = 0;
     pas = 0;
   }
   
-  ////// PROTOCOLE FINAL //////////
-  //definition de la position 0
-  else if (msg == "set_y") {
+  //consigne au moteur pas à pas
+  else if (msg == "go_pap") {
+    consigne_pas = (readLine().toInt() / 1000.0) * nb_pas_1mm;
+  }
+  
+  //consigne au moteur à courant continu
+  else if (msg == "go_mot") {
+    consigne_ticks = (readLine().toInt() / 1000.0) * nb_ticks_1mm;
+  }
+  
+  //changement de l'origine de la codeuse
+  else if (msg == "set_mot") {
     float pos = (readLine().toInt() / 1000.0) * nb_ticks_1mm;
     ticks = pos;
     consigne_ticks = pos;
@@ -130,18 +132,14 @@ void loop(){
   
   //activation de l'asservissement
   else if (msg == "asserv_on") {
+    digitalWrite(pinLeveVerin, HIGH);
     asserv_enable = true;
   }
   
   //désactivation de l'asservissement
   else if (msg == "asserv_off") {
+    digitalWrite(pinLeveVerin, LOW);
     asserv_enable = false;
-  }
-  
-  //recalage du bloc poinçon
-  else if (msg == "recal_x") {
-    consigne_pas = 0;
-    pas = 0;
   }
   
   //déplacement en un point
@@ -152,12 +150,23 @@ void loop(){
   
   //acquittement d'arrivée
   else if (msg == "acq?") {
+    if(abs(ticks - consigne_ticks) < 2 && pas == consigne_pas)
+      Serial.println("1");
+    else
+      Serial.println("0");
   }
   
   //poinçonnage
   else if (msg == "poinconne") {
+    digitalWrite(pinLeveVerin, LOW);
+    digitalWrite(pinBaisseVerin, HIGH);
+    delay(4000);
+    digitalWrite(pinBaisseVerin, LOW);
+    digitalWrite(pinLeveVerin, HIGH);
+    delay(2000);
+    Serial.println("ok");
   }
-  
+    
   //lit les pistes et renvoit le nombre de trous lus
   else if (msg == "lecture") {
   }
@@ -165,11 +174,6 @@ void loop(){
   //renvoit les id des trous lus
   else if (msg == "get_ids") {
   }
-  
-  //évacuation du carton
-  else if (msg == "sortir") {
-  }
-  
 }
 
 void update_ticks()

@@ -4,6 +4,7 @@ sys.path.append("src")
 sys.path.append("src/graphique")
 sys.path.append("src/libMidi")
 sys.path.append("src/libMidi/midi")
+sys.path.append("../pathfinding.py")
 
 from PyQt4 import QtGui
 from fenetrePrincipale import FenetrePrincipale
