@@ -44,6 +44,9 @@ class Note :
     def setColor(self, r, g, b) :
         self.color = QtGui.QColor(r, g, b)
 
+    def setChannel(self, channel) :
+        self.channel = channel
+
     def containsTime(self, temps, margin=0) :
         """
         return "INSIDE" si le temps donné en argument est à  l'intérieur de la note
@@ -79,6 +82,12 @@ def isOk(bytenote) :
     testNote = Note()
     testNote.setByte(bytenote)
     return str(testNote) in Note.noteToPisteNumber.keys()
+
+def getNumberOctave(number) :
+    note = Note.pisteNumberToNote[number]
+    number = note[:len(note)-1]
+    octave = int(note[-1])
+    return [number, octave]
 
 
 if __name__ == "__main__" :

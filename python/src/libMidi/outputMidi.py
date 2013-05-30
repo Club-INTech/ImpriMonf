@@ -41,7 +41,9 @@ class OutputMidi(MidiOutStream):
 
     def note_on(self, channel=0, note=0x40, velocity=0x40):
         if note_mod.isOk(note) :
-            self.currentTrack.addNote(channel, note_mod.Note(byte=note, timeIn=self.getCurrentTime(), color=OutputMidi.colors[channel%len(OutputMidi.colors)]))
+            noteAAjouter = note_mod.Note(byte=note, timeIn=self.getCurrentTime(), color=OutputMidi.colors[channel%len(OutputMidi.colors)])
+            noteAAjouter.setChannel(channel)
+            self.currentTrack.addNote(channel, noteAAjouter)
 
 
     def note_off(self, channel=0, note=0x40, velocity=0x40) :
@@ -105,6 +107,15 @@ class OutputMidi(MidiOutStream):
                 pass
         return modif
 
+    def ajouterNote(self, note) :
+        notes = self.getNotesBetween()
+        for noteDejaLa in notes:
+            if noteDejaLa.timeIn >= note.timeIn :
+                self._tracks[0].addNote(noteDejaLa.channel, note)
+                break
+
+    def removeNote(self, note) :
+        pass
 if __name__ == "__main__" :
     event_handler = OutputMidi()
 

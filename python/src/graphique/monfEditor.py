@@ -11,7 +11,7 @@
 
 from PyQt4 import QtGui, QtCore, Qt
 
-from note import Note
+from note import Note, getNumberOctave
 from controlZ import ControlZ, Action
 
 class MonfEditor(QtGui.QWidget) :
@@ -43,6 +43,7 @@ class MonfEditor(QtGui.QWidget) :
         self.controlZ = ControlZ()
 
         self.infoBulle = InfoBulle()
+        self.notesAffichees = []
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
@@ -93,11 +94,7 @@ class MonfEditor(QtGui.QWidget) :
             qp.fillRect(MonfEditor.DST*(temps_du_temps-self.startX), 0, 2, self.height(), QtGui.QColor(150,150,170))
 
         # On affiche les notes
-        notes = self._monf._morceau.getNotesBetween(timeLeft-10, timeRight)
-        self.notesAffichees = notes
-
-
-        for note in notes :
+        for note in self.notesAffichees :
             try :
                 self.drawNote(qp, note)
             except KeyError :
@@ -109,6 +106,11 @@ class MonfEditor(QtGui.QWidget) :
         # On affiche l'info-bulle
         self.infoBulle.update(qp)
 
+    def reloadNotes(self) :
+        timeLeft = self.startX
+        timeRight = self.startX + self.width()/MonfEditor.DST
+        notes = self._monf._morceau.getNotesBetween(timeLeft-10, timeRight)
+        self.notesAffichees = notes
 
     def drawNote(self,qp, note, option=None):
         couleur = note.color.darker(140)
@@ -178,6 +180,8 @@ class MonfEditor(QtGui.QWidget) :
 
     def mousePressEvent(self, event) :
 
+        if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton and QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier :
+            self.ajouterNote(event.pos())
         if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton :
             modifNote = self.getNoteAtPixelPosition(event.pos())
             if modifNote is None : return
@@ -219,6 +223,7 @@ class MonfEditor(QtGui.QWidget) :
 
         if MonfEditor.DST > 500 : MonfEditor.DST=500
         elif MonfEditor.DST < 20 : MonfEditor.DST = 20
+        self.reloadNotes()
         self.update()
 
     def refreshCursor(self, pos) :
@@ -270,8 +275,17 @@ class MonfEditor(QtGui.QWidget) :
             self._monf = None
         else :
             self._monf = monf
+
+        self.reloadNotes()
         self.update()
         self.controlZ = ControlZ()
+
+    def ajouterNote(self, mousepos) :
+        time, number = self.getTimeAndPisteNumberAtPosition(mousepos)
+        number, octave = getNumberOctave(number)
+        size = .2
+        note = Note(number=number, octave=octave, timeIn=time-size/2, timeOut=time+size/2, QColor=QtGui.QColor(127,127,127))
+        self._monf._morceau.ajouterNote(note)
 
 class InfoBulle :
     sizeX = 120
@@ -419,6 +433,7 @@ class ConteneurMonf(QtGui.QWidget) :
 
     def horizontalScrollChanged(self, value) :
         self.monfEditor.startX = value/ConteneurMonf.precision
+        self.monfEditor.reloadNotes()
         self.monfEditor.update()
 
 if __name__ == '__main__':
