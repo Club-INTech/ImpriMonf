@@ -108,11 +108,13 @@ class OutputMidi(MidiOutStream):
         return modif
 
     def ajouterNote(self, note) :
-        notes = self.getNotesBetween()
-        for noteDejaLa in notes:
-            if noteDejaLa.timeIn >= note.timeIn :
-                self._tracks[0].addNote(noteDejaLa.channel, note)
-                break
+        self._tracks[0].addNote(0, note)
+
+    def enleverNote(self, note) :
+        for piste in self._tracks.keys() :
+            for channel in self._tracks[piste]._channels :
+                if note in channel:
+                   channel.remove(note)
 
     def removeNote(self, note) :
         pass

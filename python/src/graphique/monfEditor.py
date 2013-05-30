@@ -182,6 +182,9 @@ class MonfEditor(QtGui.QWidget) :
 
         if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton and QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier :
             self.ajouterNote(event.pos())
+        elif QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton and QtGui.QApplication.keyboardModifiers() == QtCore.Qt.AltModifier :
+            self.enleverNote(event.pos())
+
         if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton :
             modifNote = self.getNoteAtPixelPosition(event.pos())
             if modifNote is None : return
@@ -283,9 +286,22 @@ class MonfEditor(QtGui.QWidget) :
     def ajouterNote(self, mousepos) :
         time, number = self.getTimeAndPisteNumberAtPosition(mousepos)
         number, octave = getNumberOctave(number)
-        size = .2
+        size = .15
         note = Note(number=number, octave=octave, timeIn=time-size/2, timeOut=time+size/2, QColor=QtGui.QColor(127,127,127))
+
         self._monf._morceau.ajouterNote(note)
+
+        self.reloadNotes()
+        self.update()
+
+    def enleverNote(self, mousepos) :
+        modifNote = self.getNoteAtPixelPosition(mousepos)
+        if modifNote is None : return
+
+        self._monf._morceau._output.enleverNote(modifNote.note)
+
+        self.reloadNotes()
+        self.update()
 
 class InfoBulle :
     sizeX = 120
@@ -303,6 +319,8 @@ class InfoBulle :
         self.x = 0
         self.y = 0
         self.note = None
+
+        InfoBulle.init()
 
     def update(self, qp) :
         if not self.note is None :
@@ -350,16 +368,19 @@ class InfoBulle :
             x_debut = self.x + InfoBulle.epaisseurBord + 10
             fontMetrics = QtGui.QFontMetrics(font)
             deltaY = fontMetrics.height() + InfoBulle.margin
-            qp.drawText(QtCore.QPointF(x_debut, y_debut), "Hauteur : " + str(self.note))
-            qp.drawText(QtCore.QPointF(x_debut, y_debut+deltaY), "Durée : " + "%.3f" % (self.note.timeOut - self.note.timeIn) + "s")
-            qp.drawText(QtCore.QPointF(x_debut, y_debut+2*deltaY), "Début : " + "%.2f" % (self.note.timeIn) + "s")
-            qp.drawText(QtCore.QPointF(x_debut, y_debut+3*deltaY), "Fin : " + "%.2f" % (self.note.timeOut) + "s")
-
-
+            qp.drawText(QtCore.QPointF(x_debut, y_debut), "Durée : " + "%.3f" % (self.note.timeOut - self.note.timeIn) + "s")
+            qp.drawText(QtCore.QPointF(x_debut, y_debut+deltaY), "Début : " + "%.2f" % (self.note.timeIn) + "s")
+            qp.drawText(QtCore.QPointF(x_debut, y_debut+2*deltaY), "Fin : " + "%.2f" % (self.note.timeOut) + "s")
 
     def setPosition(self, pos) :
         self.x, self.y = pos.x(), pos.y()
 
+    ### CLASS METHODES ###
+    def init() :
+        font = QtGui.QFont()
+        fontMetrics = QtGui.QFontMetrics(font)
+        nombredInfos = 4
+        InfoBulle.sizeY = (fontMetrics.height()+InfoBulle.margin)*nombredInfos + 10
 
 
 
