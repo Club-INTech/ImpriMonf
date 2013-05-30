@@ -12,6 +12,7 @@
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
 from progressBar import ProgressBarLoadingMonf
+from imprimante import Imprimante
 import fenetreAide
 
 
@@ -237,7 +238,27 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     # Action lançant le poinçonnage du carton
     def lancerPoinconnage(self) :
         print("test")
-        pointsPoincons = self.conteneurMonf.getMonf().rechercheChemin()
+        segments = self.conteneurMonf.getMonf().rechercheChemin()
+        imprimante = Imprimante()
+        input("Prêt pour l'expérience de ta vie ?")
+        imprimante.initialise()
+        imprimante.debut_rentrer_poincon()
+        input("Valide pour arrêter le bloc")
+        imprimante.fin_rentrer_poincon()
+        i=0
+        for segment in segments :
+            for point in segment :
+                i+=1
+                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
+                print("impression "+str(i)+"ème point ("+"%.2f"%point.getX()+","+"%.2f"%point.getY()+") : "+"%.2f"%avancementImpression+"%")
+                imprimante.poinconne(point.getX(), point.getY())
+            print("recalage")
+            imprimante.recalage_x()
+        input("valider pour sortir le carton")
+        imprimante.debut_sortir_carton()
+        input("valider quand le carton est totalement sorti")
+        imprimante.fin_sortir_carton()
+
 
 
     def askSave(self) :

@@ -104,7 +104,8 @@ class Monf :
                 pointsPoincons.append(Point(x, y))
             i = i+1
         print("Recherche de chemin en cours ("+str(len(pointsPoincons))+" points)")
-        pointsPoincons = LinKernighan(pointsPoincons)
+        linKernighan = LinKernighan(pointsPoincons)
+        pointsPoincons = linKernighan.calculSegments()
         return pointsPoincons
 
 def easyMonf() :

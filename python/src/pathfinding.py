@@ -22,11 +22,13 @@ class LinKernighan():
         self.INF = 99999
         self.vitesseX = 6.6 # mm/sec
         self.vitesseY = 45.6 # mm/sec
-        self.longueurSegment = 800 # distance de segmentation (en mm).
+        self.longueurSegment = 300 # distance de segmentation (en mm).
         self.points = points
         #print ("Avant traitement :")
         #self.afficherPoints(self.points)
         self.pointsTries = self.points
+
+    def calculSegments(self):
         print ("Avant tout calcul, dans l'ordre aléatoire initial : ")
         print(" longueur : "+str(self.distanceTotaleParcours()))
 
@@ -63,8 +65,9 @@ class LinKernighan():
                 #print(self.distanceTotaleParcoursSegmente())
                 nbSegmentsTraites+=1
                 avancement = nbSegmentsTraites/self.nbSegments*100
-                print("Optimisation du temps de poinçonnage : "+str(avancement)+"%")
+                print("Optimisation du temps de poinçonnage : "+"%.2f"%avancement+"%")
         print("Distance totale : "+str(self.distanceTotaleParcoursSegmente()))
+        return self.segmentsTries
 
     def segmentePoints(self):
         segments = [ [] for i in range(int(self.maxY(self.pointsTries)/self.longueurSegment + 1))]
@@ -226,7 +229,7 @@ class LinKernighan():
 
 """
 points = []
-nbPoints = 800
+nbPoints = 100
 for i in range(nbPoints):
     x = random.randint(1,1000)
     y = random.randint(1,1000)
@@ -234,6 +237,8 @@ for i in range(nbPoints):
 print ("Génération aléatoire des "+str(nbPoints)+" points : OK")
 
 l=LinKernighan(points)
+liste = []
+liste = l.calculSegments()
 """
 """
 print ("Algo 2-opt en cours ...")
