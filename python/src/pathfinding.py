@@ -20,9 +20,9 @@ class Point():
 class LinKernighan():
     def __init__(self, points):
         self.INF = 99999
-        self.vitesseX = 1.
-        self.vitesseY = 5.
-        self.longueurSegment = 600 # distance de segmentation (en mm).
+        self.vitesseX = 6.6 # mm/sec
+        self.vitesseY = 45.6 # mm/sec
+        self.longueurSegment = 800 # distance de segmentation (en mm).
         self.points = points
         #print ("Avant traitement :")
         #self.afficherPoints(self.points)
@@ -223,7 +223,6 @@ class LinKernighan():
                     elif surplusDistADEBCF < 0:
                         self.echangerPortions(indexB, indexC, indexD, indexE)
                         #print("ok", end="")
-    #Attention : echangerPortions bug car les temps s'allongent parfois, et peut-Ãªtre que renverserParcours aussi : ÃƒÂ  tester
 
 """
 points = []
