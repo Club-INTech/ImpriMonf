@@ -8,7 +8,7 @@ class Note :
     minimalInterval = morceau.Morceau.taillePoincon /morceau.Morceau.DST
 
     def __init__(self, byte=None, number=None, octave=None, timeIn=0, timeOut=0, velocity=0,color=None, QColor=None) :
-        self.numer=number
+        self.number=number
         self.octave=octave
         self.timeIn=timeIn
         self.timeOut=timeOut
@@ -21,6 +21,7 @@ class Note :
         else : self.color = QtGui.QColor(0,255,0)
 
         if not byte is None : self.setByte(byte)
+        else : self.byte = None
 
     # Permet de configurer la note selon un byte comme specifie dans la
     # norme Midi
@@ -43,6 +44,9 @@ class Note :
 
     def setColor(self, r, g, b) :
         self.color = QtGui.QColor(r, g, b)
+
+    def setChannel(self, channel) :
+        self.channel = channel
 
     def containsTime(self, temps, margin=0) :
         """
@@ -79,6 +83,12 @@ def isOk(bytenote) :
     testNote = Note()
     testNote.setByte(bytenote)
     return str(testNote) in Note.noteToPisteNumber.keys()
+
+def getNumberOctave(number) :
+    note = Note.pisteNumberToNote[number]
+    number = note[:len(note)-1]
+    octave = int(note[-1])
+    return [number, octave]
 
 
 if __name__ == "__main__" :

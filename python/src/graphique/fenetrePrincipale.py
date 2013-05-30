@@ -13,6 +13,7 @@ from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
 from progressBar import ProgressBarLoadingMonf
 from imprimante import Imprimante
+from dockWidgets import *
 import fenetreAide
 
 
@@ -26,6 +27,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.app = QApplication
         self.modifie = False
         self.monfFileName = None
+        self.layout = QtGui.QGridLayout(self)
         self.initUID()
 
     def initUID(self) :
@@ -148,12 +150,19 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMenu.addSeparator()
         toolbarMenu.addAction(openMidiAction)
 
-        # Ajout de l'éditeur de monf
+        # Ajout de l'éditeur de monf et des dockwidget
         self.conteneurMonf = ConteneurMonf(self)
+        self.lanceurImpression = LanceurImpression(self)
+        self.optionsCarton = OptionsCarton(self)
+##        self.editionMorceau = EditionMorceau(self)
 
         self.setCentralWidget(self.conteneurMonf)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.optionsCarton)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.lanceurImpression)
+##        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.editionMorceau)
+
         self.setWindowTitle('Monf Editor')
-        self.resize(900,500)
+        self.resize(900,600)
         self.refreshAnnulerRefaire()
         self.show()
 

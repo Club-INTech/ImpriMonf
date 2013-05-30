@@ -66,6 +66,12 @@ class Morceau :
         """
         return self._output.getNoteAtPosition(numero_piste, temps, notesAffichees)
 
+    def ajouterNote(self, note) :
+        """
+        Ajoute une note
+        """
+        self._output.ajouterNote(note)
+
 if __name__=="__main__" :
     m = Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
     print(m.getNotesBetween(5, 10))
