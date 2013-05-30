@@ -20,6 +20,10 @@ const byte pinENABLE = 8;   // pin d'activation du moteur pas à pas
 const int frequence_PasAPas = 650;     // fréquence d'envoi des impulsions au pas à pas, en Hz
 const float nb_pas_1mm = 100.352113; //constante de conversion
 
+/** constantes pour les distributeurs **/
+const byte pinBaisseVerin = 9;
+const byte pinLeveVerin = 10;
+
 /** variables globales, partagées par plusieurs fonctions **/
 long ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
 long consigne_ticks = 0; // consigne reçue de position du moteur à courant continu, en ticks
@@ -52,8 +56,10 @@ void setup() {
     pinMode(pinPWM,  OUTPUT);
     pinMode(pinDIR,  OUTPUT);
     pinMode(pinSENS, OUTPUT);
-    pinMode(pinCLOCK,OUTPUT);
-    pinMode(pinENABLE,OUTPUT);
+    pinMode(pinCLOCK, OUTPUT);
+    pinMode(pinENABLE, OUTPUT);
+    pinMode(pinBaisseVerin, OUTPUT);
+    pinMode(pinLeveVerin, OUTPUT);
     
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
@@ -126,11 +132,13 @@ void loop(){
   
   //activation de l'asservissement
   else if (msg == "asserv_on") {
+    digitalWrite(pinLeveVerin, HIGH);
     asserv_enable = true;
   }
   
   //désactivation de l'asservissement
   else if (msg == "asserv_off") {
+    digitalWrite(pinLeveVerin, LOW);
     asserv_enable = false;
   }
   
@@ -150,45 +158,21 @@ void loop(){
   
   //poinçonnage
   else if (msg == "poinconne") {
-    delay(500);
+    digitalWrite(pinLeveVerin, LOW);
+    digitalWrite(pinBaisseVerin, HIGH);
+    delay(4000);
+    digitalWrite(pinBaisseVerin, LOW);
+    digitalWrite(pinLeveVerin, HIGH);
+    delay(2000);
+    Serial.println("ok");
   }
-  
+    
   //lit les pistes et renvoit le nombre de trous lus
   else if (msg == "lecture") {
   }
   
   //renvoit les id des trous lus
   else if (msg == "get_ids") {
-  }
-  
-  ///////// PROTOCOLE DE DEBUG ///////////
-  //valeur max du PWM (valeur absolue)
-  else if (msg == "vm") {
-    bridage_pwm = readLine().toInt();
-  }
-  //consigne au moteur à courant continu
-  else if (msg == "cm") {
-    consigne_ticks = (readLine().toInt() / 1000.0) * nb_ticks_1mm;
-  }
-  //consigne au moteur pas à pas
-  else if (msg == "cp") {
-    consigne_pas = (readLine().toInt() / 1000.0) * nb_pas_1mm;
-  }
-  //debug des ticks
-  else if (msg == "ticks?") {
-    Serial.print(ticks);
-    Serial.print(" / ");
-    Serial.println(consigne_ticks);
-  }
-  //debug des pas
-  else if (msg == "pas?") {
-    Serial.print(pas);
-    Serial.print(" / ");
-    Serial.println(consigne_pas);
-  }
-  // pas par pas
-  else if (msg == "ccp") {
-    consigne_pas += readLine().toInt();
   }
 }
 
