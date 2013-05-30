@@ -96,17 +96,14 @@ class Monf :
 
     def rechercheChemin(self) :
         pointsPoincons = []
-        x = 3.5
-        print("entrée dans rechercheChemin")
         i=0
         for hauteurNote in self.getAllPoincons().keys() :	#On parcourt tous les coups de poinçon. #Attention : vérifier si les notes sont dans l'ordre : peu probable
-            print("boucle "+str(i)+" "+hauteurNote)
+            x = 3.5+1.75 + 5.5*self.noteToPisteNumber[hauteurNote] # 3.5mm de marge + 1.75 de demi-trou pour être au milieu
             for temps in self.getAllPoincons()[hauteurNote] :
                 y = temps * self._morceau._DST
                 pointsPoincons.append(Point(x, y))
-            x += 5.5
             i = i+1
-        print("Recherche de chemin LinKernighan en cours ("+str(len(pointsPoincons))+" points)")
+        print("Recherche de chemin en cours ("+str(len(pointsPoincons))+" points)")
         pointsPoincons = LinKernighan(pointsPoincons)
         return pointsPoincons
 
