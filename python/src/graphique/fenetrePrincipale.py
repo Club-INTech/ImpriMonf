@@ -64,6 +64,13 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
 
+        # POINCONNER LE CARTON
+        texte = 'Poinçonner le carton'
+        lancerPoinconnageAction = QtGui.QAction(QtGui.QIcon('icons/printer.png'), texte, self)
+        lancerPoinconnageAction.setShortcut('Ctrl+P')
+        lancerPoinconnageAction.setStatusTip(texte)
+        lancerPoinconnageAction.triggered.connect(self.lancerPoinconnage)
+
         # ANNULER
         texte = 'Annuler'
         annulerAction = QtGui.QAction(QtGui.QIcon('icons/edit-undo.png'), texte, self)
@@ -114,6 +121,8 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fileMenu.addSeparator()
         fileMenu.addAction(openMidiAction)
         fileMenu.addSeparator()
+        fileMenu.addAction(lancerPoinconnageAction)
+        fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
 
         editMenu = menubar.addMenu("&Edition")
@@ -130,6 +139,8 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMenu.addAction(openMonfAction)
         toolbarMenu.addAction(saveMonfAction)
         toolbarMenu.addAction(saveAsMonfAction)
+        toolbarMenu.addSeparator()
+        toolbarMenu.addAction(lancerPoinconnageAction)
         toolbarMenu.addSeparator()
         toolbarMenu.addAction(annulerAction)
         toolbarMenu.addAction(refaireAction)
@@ -221,6 +232,13 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.setWindowTitle("Monf Editor - " + midiFileName)
         self.modificate()
         self.refreshAnnulerRefaire()
+
+
+    # Action lançant le poinçonnage du carton
+    def lancerPoinconnage(self) :
+        print("test")
+        pointsPoincons = self.conteneurMonf.getMonf().rechercheChemin()
+
 
     def askSave(self) :
         """

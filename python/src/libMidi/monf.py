@@ -1,4 +1,5 @@
 ﻿import note
+from pathfinding import LinKernighan, Point
 
 class MonfOneTrack :
     """
@@ -92,6 +93,22 @@ class Monf :
         Retourne le temps total du morceau
         """
         return self._morceau.getTimeLength()
+
+    def rechercheChemin(self) :
+        pointsPoincons = []
+        x = 3.5
+        print("entrée dans rechercheChemin")
+        i=0
+        for hauteurNote in self.getAllPoincons().keys() :	#On parcourt tous les coups de poinçon. #Attention : vérifier si les notes sont dans l'ordre : peu probable
+            print("boucle "+str(i)+" "+hauteurNote)
+            for temps in self.getAllPoincons()[hauteurNote] :
+                y = temps * self._morceau._DST
+                pointsPoincons.append(Point(x, y))
+            x += 5.5
+            i = i+1
+        print("Recherche de chemin LinKernighan en cours ("+str(len(pointsPoincons))+" points)")
+        pointsPoincons = LinKernighan(pointsPoincons)
+        return pointsPoincons
 
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """
