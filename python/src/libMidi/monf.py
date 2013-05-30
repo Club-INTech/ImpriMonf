@@ -3,8 +3,6 @@
 class MonfOneTrack :
     """
     Classe MonfOneTrack
-
-    Contient les coups de poincon pour un instrument
     """
     def __init__(self, nom="") :
         # Dico de type : {NoteA#:[Temps_ou_il_y_a_des_poincons_pour_cette_note], noteA:[etc..], etc...}

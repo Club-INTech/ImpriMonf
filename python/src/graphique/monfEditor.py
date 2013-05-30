@@ -107,10 +107,11 @@ class MonfEditor(QtGui.QWidget) :
         self.infoBulle.update(qp)
 
     def reloadNotes(self) :
-        timeLeft = self.startX
-        timeRight = self.startX + self.width()/MonfEditor.DST
-        notes = self._monf._morceau.getNotesBetween(timeLeft-10, timeRight)
-        self.notesAffichees = notes
+        if not self._monf is None :
+            timeLeft = self.startX
+            timeRight = self.startX + self.width()/MonfEditor.DST
+            notes = self._monf._morceau.getNotesBetween(timeLeft-10, timeRight)
+            self.notesAffichees = notes
 
     def drawNote(self,qp, note, option=None):
         couleur = note.color.darker(140)
@@ -293,6 +294,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.reloadNotes()
         self.update()
+        self.self.getFenetrePrincipale().modificate()
 
     def enleverNote(self, mousepos) :
         modifNote = self.getNoteAtPixelPosition(mousepos)
@@ -302,6 +304,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.reloadNotes()
         self.update()
+        self.getFenetrePrincipale().modificate()
 
 class InfoBulle :
     sizeX = 120
