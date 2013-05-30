@@ -8,9 +8,13 @@ class Imprimante:
     Elle permet d'envoyer une trame sur un périphérique et d'en recevoir une en retour.
     """
     
+    #constantes de classe pour la liaison série
     baudrate = 9600
     ping = '#'
     newLine = "\n"
+    
+    #écart entre le recalage du bloc moteur et l'origine 0 (en mm)
+    origine = 5.2
     
     def __init__(self):
         
@@ -22,6 +26,10 @@ class Imprimante:
         
         #recherche du port série
         self.attribuer()
+        
+        #sauvegarde des coordonnées
+        self.x = 0 #position atteinte par le moteur pas à pas (position du poinçon)
+        self.y = 0 #position atteinte par les rouleaux (position du carton)
         
     def attribuer(self):
         """
@@ -141,17 +149,17 @@ class Imprimante:
         self.communiquer(["go_pap",position*1000],0)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
+        self.x = position
             
     def initialise(self):
         """
         Définit la position courante du carton comme 0,
-        alimente les moteurs des rouleaux pour asservir en position le carton,
-        et recale le moteur pas à pas.
+        et alimente les moteurs des rouleaux pour asservir en position le carton.
         """
         
         self.communiquer(["set_mot",0],0)
+        self.y = 0
         self.communiquer("asserv_on",0)
-        self.recalage_x()
             
     def recalage_x(self):
         """
@@ -160,15 +168,16 @@ class Imprimante:
         
         self._pap_aller_a(-20)
         self.communiquer("reset_pap",0)
-        self._pap_aller_a(4.680)
+        self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
+        self.x = 0
             
     def poinconne(self, x, y):
         """
         x correspond à une position atteinte par le moteur pas à pas (position du poinçon)
         y correspond à une position atteinte par les rouleaux (position du carton)
         L'imprimante s'y déplace, poinçonne, et rend la main au programme.
-        Les coordonnées sont toutes deux en microns et envoyées avec un entier.
+        Les coordonnées sont indiquées en mm (avec ou sans virgule) et sont envoyées en microns entiers.
         """
         
         #envoi des consignes (n'attend pas de réponse)
@@ -177,6 +186,9 @@ class Imprimante:
         #acquittement d'arrivée par l'imprimante (booléen dans le 1er élément de la liste)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
+            
+        self.x = x
+        self.y = y
             
         #ordre de poinçonnage (l'attente se fait grâce à une trame renvoyée en fin de poinçonnage)
         self.communiquer("poinconne",1)
@@ -198,9 +210,28 @@ class Imprimante:
         else:
             return []
     
+    def debut_rentrer_poincon(self):
+        """
+        Décale le bloc poinçonneur vers la gauche. 
+        Doit etre stoppé par l'utilisateur.
+        """
+        
+        self.communiquer(["go_pap",-999999999],0)
+        
+    def fin_rentrer_poincon(self):
+        """
+        Stoppe le moteur lorsque l'utilisateur a vérifié la butée du bloc poinçonneur.
+        """
+        
+        self.communiquer("reset_pap",0)
+        self._pap_aller_a(Imprimante.origine)
+        self.communiquer("reset_pap",0)
+        self.x = 0
+        
     def debut_sortir_carton(self):
         """
         Evacue le carton de l'imprimante en fin d'impression.
+        Doit etre stoppé par l'utilisateur.
         """
         
         self.communiquer(["go_mot",999999999],0)

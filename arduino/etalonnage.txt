@@ -1,0 +1,13 @@
+#recalage
+-inf
++470 pas --> 0 en mm
+	     ecart bloc : 21.1mm
+
+14250 pas / 142 mm
+100,352113
+
+#vitesses
+650 : 21sec30 pour 142mm
+soit 6,6 mm/sec pour le pas à pas
+21sec30 pour 1000mm
+soit 46,5 mm/sec pour le moteur continu
