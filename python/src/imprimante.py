@@ -144,7 +144,7 @@ class Imprimante:
 #########################################################
 
     def _pap_aller_a(self, position):
-        self.communiquer(["go_pap",position*1000],0)
+        self.communiquer(["go_pap",int(position*1000)],0)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
 
@@ -157,16 +157,23 @@ class Imprimante:
         self.communiquer(["set_mot",0],0)
         self.communiquer("asserv_on",0)
 
-    def recalage_x(self):
+    def debut_rentrer_poincon(self):
         """
-        Recale le moteur pas à pas sur une butée pour pallier aux glissements.
+        Décale le bloc poinçonneur vers la gauche.
+        Doit etre stoppé par l'utilisateur.
         """
 
-        self._pap_aller_a(-20)
+        self.communiquer(["go_pap",-165000],0)
+
+    def fin_rentrer_poincon(self):
+        """
+        Stoppe le moteur lorsque l'utilisateur a vérifié la butée du bloc poinçonneur.
+        """
+
         self.communiquer("reset_pap",0)
         self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
-
+       
     def poinconne(self, x, y):
         """
         x correspond à une position atteinte par le moteur pas à pas (position du poinçon)
@@ -189,6 +196,16 @@ class Imprimante:
         time.sleep(0.2)
         self.communiquer("poincon_libre",0)
 
+    def recalage_x(self):
+        """
+        Recale le moteur pas à pas sur une butée pour pallier aux glissements.
+        """
+
+        self._pap_aller_a(-20)
+        self.communiquer("reset_pap",0)
+        self._pap_aller_a(Imprimante.origine)
+        self.communiquer("reset_pap",0)
+        
     #TODO
     def lit_pistes(self):
         """
@@ -206,29 +223,21 @@ class Imprimante:
         else:
             return []
 
-    def debut_rentrer_poincon(self):
+    def fin_impression(self):
         """
-        Décale le bloc poinçonneur vers la gauche.
-        Doit etre stoppé par l'utilisateur.
+        Désasservit les moteurs en fin d'impression.
         """
-
-        self.communiquer(["go_pap",-999999999],0)
-
-    def fin_rentrer_poincon(self):
-        """
-        Stoppe le moteur lorsque l'utilisateur a vérifié la butée du bloc poinçonneur.
-        """
-
-        self.communiquer("reset_pap",0)
-        self._pap_aller_a(Imprimante.origine)
-        self.communiquer("reset_pap",0)
-
+        
+        self.communiquer(["set_mot",0],0)
+        self.communiquer("asserv_off",0)
+        
     def debut_sortir_carton(self):
         """
         Evacue le carton de l'imprimante en fin d'impression.
         Doit etre stoppé par l'utilisateur.
         """
 
+        self.communiquer("asserv_on",0)
         self.communiquer(["go_mot",999999999],0)
 
     def fin_sortir_carton(self):
