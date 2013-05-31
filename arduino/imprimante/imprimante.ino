@@ -93,6 +93,7 @@ String readLine()
       inChar = Serial.read();
     }
   }
+  //acquittement de la trame
   Serial.println("_");
   return inString;
 }
@@ -133,13 +134,17 @@ void loop(){
   //activation de l'asservissement
   else if (msg == "asserv_on") {
     digitalWrite(pinLeveVerin, HIGH);
+    delay(2000);
+    digitalWrite(pinLeveVerin, LOW);
     asserv_enable = true;
   }
   
   //désactivation de l'asservissement
   else if (msg == "asserv_off") {
-    digitalWrite(pinLeveVerin, LOW);
     asserv_enable = false;
+    digitalWrite(pinLeveVerin, HIGH);
+    delay(2000);
+    digitalWrite(pinLeveVerin, LOW);
   }
   
   //déplacement en un point
@@ -150,21 +155,22 @@ void loop(){
   
   //acquittement d'arrivée
   else if (msg == "acq?") {
-    if(abs(ticks - consigne_ticks) < 2 && pas == consigne_pas)
+    if(abs(ticks - consigne_ticks) < 3 && pas == consigne_pas)
       Serial.println("1");
     else
       Serial.println("0");
   }
   
   //poinçonnage
-  else if (msg == "poinconne") {
-    digitalWrite(pinLeveVerin, LOW);
+  else if (msg == "poincon_bas") {
     digitalWrite(pinBaisseVerin, HIGH);
-    delay(4000);
+  }
+  else if (msg == "poincon_haut") {
     digitalWrite(pinBaisseVerin, LOW);
     digitalWrite(pinLeveVerin, HIGH);
-    delay(2000);
-    Serial.println("ok");
+  }
+  else if (msg == "poincon_libre") {
+    digitalWrite(pinLeveVerin, LOW);
   }
     
   //lit les pistes et renvoit le nombre de trous lus
