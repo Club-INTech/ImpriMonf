@@ -24,6 +24,9 @@ const float nb_pas_1mm = 100.352113; //constante de conversion
 const byte pinBaisseVerin = 9;
 const byte pinLeveVerin = 10;
 
+/** constantes pour la lecture des photodiodes **/
+const byte pinlecture = 11;
+
 /** variables globales, partagées par plusieurs fonctions **/
 long ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
 long consigne_ticks = 0; // consigne reçue de position du moteur à courant continu, en ticks
@@ -52,7 +55,7 @@ void setup() {
     attachInterrupt(0, update_ticks, CHANGE); // sur arduino duemilanove, pin2 = pin d'interruption 0
     attachInterrupt(1, update_ticks, CHANGE); //                       et pin3 = pin d'interruption 1
     
-    //initialisation des broches de
+    //initialisation des états des broches
     pinMode(pinPWM,  OUTPUT);
     pinMode(pinDIR,  OUTPUT);
     pinMode(pinSENS, OUTPUT);
@@ -60,6 +63,8 @@ void setup() {
     pinMode(pinENABLE, OUTPUT);
     pinMode(pinBaisseVerin, OUTPUT);
     pinMode(pinLeveVerin, OUTPUT);
+    
+    pinMode(pinlecture, INPUT);
     
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
@@ -134,7 +139,7 @@ void loop(){
   //activation de l'asservissement
   else if (msg == "asserv_on") {
     digitalWrite(pinLeveVerin, HIGH);
-    delay(2000);
+    delay(2000 * prescaler);
     digitalWrite(pinLeveVerin, LOW);
     asserv_enable = true;
   }
@@ -143,7 +148,7 @@ void loop(){
   else if (msg == "asserv_off") {
     asserv_enable = false;
     digitalWrite(pinLeveVerin, HIGH);
-    delay(2000);
+    delay(2000 * prescaler);
     digitalWrite(pinLeveVerin, LOW);
   }
   
@@ -175,10 +180,7 @@ void loop(){
     
   //lit les pistes et renvoit le nombre de trous lus
   else if (msg == "lecture") {
-  }
-  
-  //renvoit les id des trous lus
-  else if (msg == "get_ids") {
+    lire_photodiodes();
   }
 }
 
@@ -298,4 +300,26 @@ void _frontMontantPAP()
 void _frontDescendantPAP()
 {
   digitalWrite(pinCLOCK, LOW);
+}
+
+/** Renvoit l'état des photodiodes lues une par une **/
+void lire_photodiodes()
+{
+  unsigned long resultat = 0;
+  
+  for(byte d=26; d>=0; d--)
+  {
+    //TODO: inscription de l'identifiant sur le port (5 bits)
+    
+    //attente de la stabilisation du signal (~3ms)
+    delay(3 * prescaler);
+    
+    //lecture et sauvegarde de l'état d'une diode
+    if (digitalRead(pinlecture) == HIGH)
+      resultat |= 0b1;
+    resultat = resultat << 1;
+  }
+  
+  //communication des états des diodes en un seul entier
+  Serial.println(resultat >> 1);
 }

@@ -136,8 +136,8 @@ class Imprimante:
         #liste des réponses
         reponses = []
         for i in range(nb_lignes_reponse):
-            reponse = Imprimante.symb_acquittement
-            while reponse == Imprimante.symb_acquittement:
+            reponse = ''
+            while reponse == Imprimante.symb_acquittement or reponse == '':
                 reponse = self._clean_string(str(self.serie.readline(),"utf-8"))
                 # print("\t réponse >"+reponse+"<")#DEBUG
                 time.sleep(0.05)
@@ -219,22 +219,24 @@ class Imprimante:
         self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
         
-    #TODO
     def lit_pistes(self):
         """
         Renvoit une liste des id des trous lus à la position courante.
+        0 est la piste la plus aïgue, 26 la plus grave.
         Renvoit [] si aucun trou détecté.
         """
 
-        #lit les pistes et renvoit le nombre de trous
-        nb_trous = int(self.communiquer("lecture",1)[0])
+        #lit les pistes et renvoit leur état (troué ou non) en un seul entier
+        ligne = int(self.communiquer("lecture",1)[0])
 
-        if nb_trous:
-            #récupère les id des trous et retourne la liste d'entiers
-            liste_id = list(map(lambda x: int(x), self.communiquer("get_ids",nb_trous)))
-            return liste_id
-        else:
-            return []
+        trous = []
+        k = 0
+        while ligne > 0:
+            if ligne % 2:
+                trous.append(k)
+            ligne >>= 1
+            k += 1
+        return trous
 
     def fin_impression(self):
         """
