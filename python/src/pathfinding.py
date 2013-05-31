@@ -24,10 +24,13 @@ class LinKernighan():
         self.vitesseY = 45.6 # mm/sec
         self.longueurSegment = 300 # distance de segmentation (en mm).
         self.points = points
+        self.lastSegmentPret = -1
         #print ("Avant traitement :")
         #self.afficherPoints(self.points)
         self.pointsTries = self.points
-
+        self.segments = self.segmentePoints()
+        self.segmentsTries = []
+    """
     def calculSegments(self):
         print ("Avant tout calcul, dans l'ordre aléatoire initial : ")
         print(" longueur : "+str(self.distanceTotaleParcours()))
@@ -55,12 +58,12 @@ class LinKernighan():
                 self.calcule_parcours_2opt()
                 #print (" Apres calcul 2-opt :")
                 #print(" longueur : " + str(self.distanceTotaleParcours()))
-                """
+                "" "
                 print ("Algo 3-opt en cours ...")
                 self.calcule_parcours_3opt()
                 print (" Apres calcul 3-opt :")
                 print(" longueur : " + str(self.distanceTotaleParcours()))
-                """
+                "" "
                 self.segmentsTries.append(self.pointsTries)
                 #print(self.distanceTotaleParcoursSegmente())
                 nbSegmentsTraites+=1
@@ -68,6 +71,38 @@ class LinKernighan():
                 print("Optimisation du temps de poinçonnage : "+"%.2f"%avancement+"%")
         print("Distance totale : "+str(self.distanceTotaleParcoursSegmente()))
         return self.segmentsTries
+    """
+
+    """Calcule un segment donné """
+    def calculSegment(self, id_segment):
+        segment = self.segments[id_segment]
+        if len(segment) > 0 :
+            self.points = list(segment)
+            #print ("Algo plus proche voisin en cours sur "+str(len(segment))+"points")
+            self.pointsTries = self.plusProcheVoisin()
+            #print ("Apres calcul plus proche voisin :")
+            #self.afficherPoints(self.pointsTries)   #décommenter pour avoir l'affichage de la liste des points.
+            #print(" longueur : "+str(self.distanceTotaleParcours()))
+
+            #print ("Algo 2-opt en cours ...")
+            self.calcule_parcours_2opt()
+            #print (" Apres calcul 2-opt :")
+            #print(" longueur : " + str(self.distanceTotaleParcours()))
+
+            #print ("Algo 2eme 2-opt en cours ...")
+            self.calcule_parcours_2opt()
+            #print (" Apres calcul 2-opt :")
+            #print(" longueur : " + str(self.distanceTotaleParcours()))
+            """
+            print ("Algo 3-opt en cours ...")
+            self.calcule_parcours_3opt()
+            print (" Apres calcul 3-opt :")
+            print(" longueur : " + str(self.distanceTotaleParcours()))
+            """
+            self.segmentsTries.append(self.pointsTries)
+            #print(self.distanceTotaleParcoursSegmente())
+            print("Optimisation du temps de poinçonnage du segment n°"+str(id_segment)+": OK")
+        self.lastSegmentPret = id_segment
 
     def segmentePoints(self):
         segments = [ [] for i in range(int(self.maxY(self.pointsTries)/self.longueurSegment + 1))]
@@ -76,6 +111,15 @@ class LinKernighan():
         self.nbSegments = len(segments)
         print("Après segmentation : "+str(self.nbSegments)+" segments")
         return segments
+
+    def getNbSegments(self):
+        return self.nbSegments
+
+    def getDernierSegmentCalcule(self):
+        return self.pointsTries
+
+    def getLastSegmentPret(self):
+        return self.lastSegmentPret
 
     def maxY(self, pts):
         max = 0

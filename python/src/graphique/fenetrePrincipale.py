@@ -15,6 +15,8 @@ from progressBar import ProgressBarLoadingMonf
 from imprimante import Imprimante
 from dockWidgets import *
 import fenetreAide
+import time
+import threading
 
 
 
@@ -243,7 +245,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.modificate()
         self.refreshAnnulerRefaire()
 
-
+    """
     # Action lançant le poinçonnage du carton
     def lancerPoinconnage(self) :
         print("test")
@@ -255,18 +257,73 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         input("Valide pour arrêter le bloc")
         imprimante.fin_rentrer_poincon()
         i=0
+
+
+        #TEST SCRIPTE :
+        imprimante.poinconne(88, 52)
+        imprimante.poinconne(88, 56)
+        imprimante.poinconne(88, 59)
+        imprimante.poinconne(88, 63)
+        imprimante.poinconne(88, 66)
+        imprimante.poinconne(88, 70)
+        imprimante.recalage_x()
+        imprimante.poinconne(88, 84)
+        imprimante.poinconne(88, 87)
+        imprimante.poinconne(88, 91)
+        imprimante.recalage_x()
+
         for segment in segments :
             for point in segment :
                 i+=1
+                x=round(point.getX(), 2)
+                y=round(point.getY(), 2)
                 avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
-                print("impression "+str(i)+"ème point ("+"%.2f"%point.getX()+","+"%.2f"%point.getY()+") : "+"%.2f"%avancementImpression+"%")
-                imprimante.poinconne(point.getX(), point.getY())
+                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
+                imprimante.poinconne(x, y)
             print("recalage")
             imprimante.recalage_x()
+
         input("valider pour sortir le carton")
         imprimante.debut_sortir_carton()
         input("valider quand le carton est totalement sorti")
         imprimante.fin_sortir_carton()
+    """
+
+    def lancerPoinconnage(self) : #Version qui poinçonne pas
+        linKernighan = self.conteneurMonf.getMonf().rechercheChemin()
+        nb_segments = linKernighan.getNbSegments()
+        segments = []
+        #imprimante = Imprimante()
+        input("Prêt pour l'expérience de ta vie ?")
+        #imprimante.initialise()
+        #imprimante.debut_rentrer_poincon()
+        input("Valide pour arrêter le bloc")
+        #imprimante.fin_rentrer_poincon()
+        i=0
+        id_segment = 0
+        linKernighan.calculSegment(0)
+        while id_segment < nb_segments :
+            while not linKernighan.getLastSegmentPret() >= id_segment :
+                time.sleep(0.1)
+            segmentAImprimer = linKernighan.getDernierSegmentCalcule()
+            if id_segment+1 < nb_segments and linKernighan.getLastSegmentPret() == id_segment: #Si ce n'est pas le dernier segment
+                 thread = threading.Thread(None, linKernighan.calculSegment, None, (id_segment+1,))
+                 thread.start()
+            for point in segmentAImprimer :
+                i+=1
+                x=round(point.getX(), 2)
+                y=round(point.getY(), 2)
+                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
+                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
+                #imprimante.poinconne(x, y)
+            id_segment+=1
+            print("recalage")
+            #imprimante.recalage_x()
+        #imprimante.fin_impression()
+        input("valider pour sortir le carton")
+        #imprimante.debut_sortir_carton()
+        input("valider quand le carton est totalement sorti")
+        #imprimante.fin_sortir_carton()
 
 
 
