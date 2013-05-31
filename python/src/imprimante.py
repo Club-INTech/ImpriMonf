@@ -57,7 +57,7 @@ class Imprimante:
                 #vide le buffer série coté pc
                 instanceSerie.flushInput()
 
-                #initialisation de l'arduino (quit recoit un reset à l'instanciation de la série)
+                #initialisation de l'arduino (qui recoit un reset à l'instanciation de la série)
                 time.sleep(2)
 
                 #évacuation du message de fin d'initialisation (gardé pour le debug)
@@ -185,12 +185,9 @@ class Imprimante:
         #envoi des consignes (n'attend pas de réponse)
         self.communiquer(["aller_a", int(1000*x), int(1000*y)],0)
 
-        try:
-            #acquittement d'arrivée par l'imprimante (booléen dans le 1er élément de la liste)
-            while not int(self.communiquer("acq?",1)[0]):
-                time.sleep(0.1)
-        except Exception as e:
-            print("#E poinconne : "+e)
+        #acquittement d'arrivée par l'imprimante (booléen dans le 1er élément de la liste)
+        while not int(self.communiquer("acq?",1)[0]):
+            time.sleep(0.1)
 
         self.x = x
         self.y = y
