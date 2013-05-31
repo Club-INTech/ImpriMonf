@@ -1,78 +1,63 @@
 ﻿from PyQt4 import QtCore, QtGui
 
-class SleepProgress(QtCore.QThread):
-
-    def __init__(self, morceau) :
-        QtCore.QThread.__init__(self)
-        self.morceau = morceau
-        self.add = None
-        self.fini = None
-        self.communicate = Communicate()
-
-    def connection(self) :
-        self.communicate.ajouterNote.connect(self.add)
-        self.communicate.finir.connect(self.fini)
-
-    def run(self):
-        QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
-        self.monf = self.morceau.parseOutput(self.communicate)
-        self.communicate.finir.emit()
-        QtGui.QApplication.restoreOverrideCursor()
-
-class Communicate(QtCore.QObject) :
+class CommunicateMonfConversion(QtCore.QObject) :
     ajouterNote = QtCore.pyqtSignal(int)
     finir = QtCore.pyqtSignal()
 
-class ProgressBarLoadingMonf(QtGui.QDialog):
-    def __init__(self, parent, morceau):
-        QtGui.QDialog.__init__(self, None)
-        self.parent=parent
-        self.morceau = morceau
-        self.thread = SleepProgress(morceau)
+class ProgressBarThread(QtCore.QThread) :
+    def __init__(self, parent) :
+        QtCore.QThread.__init__(self)
+        self.run = parent.run
 
-        nombreDeNotes = len(morceau.getNotesBetween())
+class ProgressBarMonf(QtGui.QProgressBar) :
+    def __init__(self, parent) :
+        QtGui.QProgressBar.__init__(self, parent)
 
-        self.progressbar = QtGui.QProgressBar(self)
-        self.valeurProgression = 0
-        self.progressbar.setMinimum(0)
-        self.progressbar.setMaximum(nombreDeNotes)
+        self.setMinimum(0)
+        self.boutton = None
+        self.communicateMonfConversion= CommunicateMonfConversion()
 
-        texte = QtGui.QLabel("Importation du fichier MiDi en cours...", self)
+        self.communicateMonfConversion.ajouterNote.connect(self.add)
+        self.communicateMonfConversion.finir.connect(self.finir)
 
-        mainLayout = QtGui.QGridLayout()
-        mainLayout.addWidget(self.progressbar, 1, 0)
-        mainLayout.addWidget(texte, 0,0)
+    def setMonf(self, monf) :
+        self.monf = monf
+        self.setValue(self.minimum())
 
-        self.setLayout(mainLayout)
-        self.setWindowTitle("Ça vient, ça vient")
+    def setBouton(self, bouton) :
+        self.bouton = bouton
 
-        self.thread.add = self.updatePBar
-        self.thread.fini = self.fini
-        self.thread.connection()
+    def reloadMaximum(self) :
+        self.nombreDeNotes = len(self.monf.morceau().getNotesBetween()) +1
+        self.setMaximum(self.nombreDeNotes)
 
+    def start(self) :
+        if not self.bouton is None : self.bouton.setDisabled(True)
+##        if not hasattr(self, "progressBarThread") or not self.progressBarThread.isRunning() :
+##        self.progressBarThread = ProgressBarThread(self)
+##        self.progressBarThread.start(QtCore.QThread.LowestPriority)
+        self.run()
 
-        self.thread.start()
+    def run(self) :
+        # Appeller la fonction self.start() pour lancer la conversion
+        #
+        self.reloadMaximum()
+        self.setValue(self.minimum())
+        self.monf.conversion(self.communicateMonfConversion)
 
-        QtGui.QDialog.exec_(self)
+    def add(self, valeur=1):
+        self.setValue(self.value()+valeur)
 
+    def finir(self) :
+        self.setValue(self.maximum())
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("Ça c'est fait !")
+        msgBox.setText("Conversion effectuée !")
+        msgBox.setIcon(QtGui.QMessageBox.Information)
+        msgBox.setInformativeText("Vous pouvez désormais lancer l'impression")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        ret = msgBox.exec_()
 
-
-    def updatePBar(self, valeur=1):
-        self.progressbar.setValue(self.valeurProgression+valeur)
-        self.valeurProgression += valeur
-
-    def fini(self):
-        self.parent.conteneurMonf.reloadMonf(self.thread.monf)
-        self.parent.statusbar.showMessage("Fichier MiDi importé  !")
-        self.reject(True)
-        self.thread.quit()
-
-##    def close(self, force = False) :
-##        if force : QtGui.QDialog.close(self)
-##        else : pass
-    def reject(self, force=False) :
-        if not force :
-            pass
-        else :
-            QtGui.QDialog.reject(self)
+        if not self.bouton is None : self.bouton.setEnabled(True)
 

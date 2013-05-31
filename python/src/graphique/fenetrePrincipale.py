@@ -11,7 +11,6 @@
 
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
-from progressBar import ProgressBarLoadingMonf
 from imprimante import Imprimante
 from dockWidgets import *
 import fenetreAide
@@ -29,7 +28,6 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.app = QApplication
         self.modifie = False
         self.monfFileName = None
-        self.layout = QtGui.QGridLayout(self)
         self.initUID()
 
     def initUID(self) :
@@ -166,6 +164,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.setWindowTitle('Monf Editor')
         self.resize(900,600)
         self.refreshAnnulerRefaire()
+        self.nouveau()
         self.show()
 
     # Indiquer qu'il y a eu des modifications
@@ -177,7 +176,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     # Nouveau fichier.
     def nouveau(self) :
         if not self.askSave() : return
-        self.conteneurMonf.reloadMonf()
+        self.reloadMonf(monf.Monf())
         self.modifie = False
         self.refreshAnnulerRefaire()
 
@@ -190,7 +189,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         monf_ = monf.openMonf(monfFileName)
 
-        self.conteneurMonf.reloadMonf(monf_)
+        self.reloadMonf(monf_)
         self.statusbar.showMessage("Fichier Monf " + monfFileName + " ouvert  !")
 
         self.setWindowTitle("Monf Editor - " +  monfFileName)
@@ -238,8 +237,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
             return
 
         morc = morceau.Morceau(midiFileName)
-        # Lancement de la conversion
-        popup = ProgressBarLoadingMonf(self, morc)
+
+        nouveauMonf = monf.Monf(morc)
+
+        self.reloadMonf(nouveauMonf)
 
         self.setWindowTitle("Monf Editor - " + midiFileName)
         self.modificate()
@@ -334,6 +335,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         """
         if not self.modifie : return True
         msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("Attention !")
         msgBox.setText("Le fichier a été modifié.")
         msgBox.setIcon(QtGui.QMessageBox.Question)
         msgBox.setInformativeText("Voulez-vous sauvegarder les modifications ?")
@@ -355,6 +357,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def openCredits(self) :
         fenetreAide.Credits(self)
 
+
     def refreshAnnulerRefaire(self) :
         self.annulerAction.setDisabled(True)
         self.refaireAction.setDisabled(True)
@@ -362,6 +365,14 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def closeEvent(self, event) :
         if not self.askSave() : event.ignore()
         else : event.accept()
+
+    def getMonf(self) :
+        return self.monf
+
+    def reloadMonf(self, nouveauMonf):
+        self.monf = nouveauMonf
+        self.conteneurMonf.reloadMonf(self.monf)
+        self.lanceurImpression.reloadMonf(self.monf)
 
 if __name__ == "__main__" :
 

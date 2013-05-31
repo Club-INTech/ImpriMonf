@@ -1,38 +1,15 @@
 ﻿import note
 from pathfinding import LinKernighan, Point
 
-class MonfOneTrack :
-    """
-    Classe MonfOneTrack
-    """
-    def __init__(self, nom="") :
-        # Dico de type : {NoteA#:[Temps_ou_il_y_a_des_poincons_pour_cette_note], noteA:[etc..], etc...}
-        self._poincons = {}
-        self._nom = nom
-
-    # Ajout d'un coup de poincon
-    def addPoincon(self, hauteurNote, temps) :
-        if hauteurNote in self._poincons.keys() and not temps in self._poincons[hauteurNote]:
-            self._poincons[hauteurNote].append(temps)
-        else :
-            self._poincons[hauteurNote] = [temps]
-
-    # Remove un coup de poincon
-    def removePoincon(self, hauteurNote, temps) :
-        try : self._poincons[hauteurNote].remove(temps)
-        except : pass
-
-
 class Monf :
     """
     Classe Monf
 
     Contient les coups de poincons de tout un morceau
     """
-    def __init__(self, nom="", morceau=None) :
-        self._monfsOneTrack = []
-        self._nom=nom
+    def __init__(self, morceau=None) :
 
+        self._poincons = {} #Tableau de type {NoteA#=[temps_où_y'a_des_coups_de_poincon]}
         if not morceau is None : self._morceau = morceau # Instance de Morceau
         else :
             import morceau
@@ -40,25 +17,48 @@ class Monf :
 
         self.noteToPisteNumber = note.Note.noteToPisteNumber
 
+    def conversion(self, communication=None) :
+        """
+        Rempli le tableau self._poincons à partir de self._morceau
+        La partie communication à passer en paramètre sert à remplir une éventuelle barre de chargement
+        """
+        notesPassees = 0
+        notes = self._morceau._output.getNotesBetween()
+        for note in notes :
+            dureePoincon = float(self._morceau._taillePoincon / self._morceau._DST)
+            temps_courant = note.timeIn
+            while temps_courant < note.timeOut:
+                if temps_courant + dureePoincon < note.timeOut : self.addPoincon(str(note), temps_courant)
+                else : self.addPoincon(str(note), note.timeOut)
 
-    def addMonfOneTrack(self, m) :
-        self._monfsOneTrack.append(m)
+                temps_courant += 0.9*dureePoincon
+
+            # Barre de progression
+            if not communication is None and notesPassees > 100:
+                communication.ajouterNote.emit(notesPassees)
+                notesPassees=0
+            notesPassees += 1
+
+        if not communication is None : communication.finir.emit()
+
+    def addPoincon(self, hauteurNote, temps) :
+        """
+        Ajoute un poincon
+        """
+        if hauteurNote in self._poincons.keys() :
+            self._poincons[hauteurNote].append(temps)
+        else :
+            self._poincons[hauteurNote] = [temps]
 
     def getAllPoincons(self) :
         """
         Retourne l'ensemble des poincons du morceau. Merge l'ensemble des poincons de toutes les tracks
         """
-        poincons = {}
-        for monfTrack in self._monfsOneTrack :
-            for note in monfTrack._poincons.keys() :
-                if not note in poincons.keys() :
-                    poincons[note] = monfTrack._poincons[note]
-                else :
-                    poincons[note] += monfTrack._poincons[note]
-        return poincons
+        return self._poincons
 
     def getNombrePoincons(self, poincons=None):
         if poincons is None : poincons = self.getAllPoincons()
+        else : poincons = self._poincons
         a = 0
         for k in poincons.keys() :
             a += len(poincons[k])
@@ -103,6 +103,9 @@ class Monf :
             i = i+1
         linKernighan = LinKernighan(pointsPoincons)
         return linKernighan
+
+    def morceau(self) :
+        return self._morceau
 
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """

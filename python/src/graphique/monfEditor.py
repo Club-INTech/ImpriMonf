@@ -294,7 +294,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.reloadNotes()
         self.update()
-        self.self.getFenetrePrincipale().modificate()
+        self.getFenetrePrincipale().modificate()
 
     def enleverNote(self, mousepos) :
         modifNote = self.getNoteAtPixelPosition(mousepos)

@@ -13,7 +13,10 @@ import note as note_mod
 class OutputMidi(MidiOutStream):
     colors = [[200,20,0],[20,0,200], [0,20,200], [200,0,20], [0,200,20], [20,200,0], [100,200,100], [200,100,100], [100,100,200], [10,10,100]]
     def __init__(self) :
-        self._tracks = {} #Dico type "id":Piste()
+        self._tracks = {0:Piste()} #Dico type "id":Piste()
+
+        self._bpm = 140
+        self.temps_dune_noire = 60/self._bpm
 
     def header(self, format=0, nTracks=1, division=96) :
         self.format = format
