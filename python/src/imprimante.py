@@ -27,10 +27,6 @@ class Imprimante:
         #recherche du port série
         self.attribuer()
 
-        #sauvegarde des coordonnées
-        self.x = 0 #position atteinte par le moteur pas à pas (position du poinçon)
-        self.y = 0 #position atteinte par les rouleaux (position du carton)
-
     def attribuer(self):
         """
         Cette méthode invoquée au lancement du service série permet de détecter et stocker le chemin pour communiquer avec la carte.
@@ -151,7 +147,6 @@ class Imprimante:
         self.communiquer(["go_pap",position*1000],0)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
-        self.x = position
 
     def initialise(self):
         """
@@ -160,19 +155,17 @@ class Imprimante:
         """
 
         self.communiquer(["set_mot",0],0)
-        self.y = 0
         self.communiquer("asserv_on",0)
 
     def recalage_x(self):
         """
-        Recale le moteur pas à pas sur une butée pour palier aux glissements.
+        Recale le moteur pas à pas sur une butée pour pallier aux glissements.
         """
 
         self._pap_aller_a(-20)
         self.communiquer("reset_pap",0)
         self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
-        self.x = 0
 
     def poinconne(self, x, y):
         """
@@ -188,9 +181,6 @@ class Imprimante:
         #acquittement d'arrivée par l'imprimante (booléen dans le 1er élément de la liste)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
-
-        self.x = x
-        self.y = y
 
         #ordre de poinçonnage (l'attente se fait grâce à une trame renvoyée en fin de poinçonnage)
         self.communiquer("poincon_bas",0)
@@ -232,7 +222,6 @@ class Imprimante:
         self.communiquer("reset_pap",0)
         self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
-        self.x = 0
 
     def debut_sortir_carton(self):
         """
