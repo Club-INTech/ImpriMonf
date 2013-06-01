@@ -66,6 +66,9 @@ void setup() {
     
     pinMode(pinlecture, INPUT);
     
+    //les 5 premiers bits du port C adressent la photodiode lue
+    DDRC |= 0b00011111;
+    
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
     
@@ -309,7 +312,8 @@ void lire_photodiodes()
   
   for(byte d=26; d>=0; d--)
   {
-    //TODO: inscription de l'identifiant sur le port (5 bits)
+    //inscription de l'identifiant sur le port C (5 premiers bits)
+    PORTC = (PORTC & 0b11100000) | d;
     
     //attente de la stabilisation du signal (~3ms)
     delay(3 * prescaler);
