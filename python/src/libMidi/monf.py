@@ -1,5 +1,6 @@
 ﻿import note
 from pathfinding import LinKernighan, Point
+from imprimante import Imprimante
 
 class Monf :
     """
@@ -9,7 +10,7 @@ class Monf :
     """
     def __init__(self, morceau=None) :
 
-        self._poincons = {} #Tableau de type {NoteA#=[temps_où_y'a_des_coups_de_poincon]}
+        self.initPoincons() #Tableau de type {NoteA#=[temps_où_y'a_des_coups_de_poincon]}
         if not morceau is None : self._morceau = morceau # Instance de Morceau
         else :
             import morceau
@@ -17,14 +18,47 @@ class Monf :
 
         self.noteToPisteNumber = note.Note.noteToPisteNumber
 
-    def conversion(self, communication=None) :
+    def initPoincons(self) :
+        self._poincons = {}
+
+    def conversion(self, communication=None, notesAConvertir=None) :
         """
         Rempli le tableau self._poincons à partir de self._morceau
         La partie communication à passer en paramètre sert à remplir une éventuelle barre de chargement
         """
+        self.initPoincons()
+        if notesAConvertir is None : notes = self._morceau._output.getNotesBetween()
+        else : notes = notesAConvertir
+
+
+        if notes == [] : return
+
+        if not communication is None : communication.addValue(1)
+        # Merge notes
+        newNotes = []
         notesPassees = 0
-        notes = self._morceau._output.getNotesBetween()
         for note in notes :
+            if newNotes == [] : newNotes.append(note.copy())
+            else :
+                noteAjoutee = False
+                for newNote in newNotes :
+                    if str(note) == str(newNote) and note.timeIn <= newNote.timeOut and note.timeOut >= newNote.timeIn :
+                        newNote.timeIn = min(newNote.timeIn, note.timeIn)
+                        newNote.timeOut = max(newNote.timeOut, note.timeOut)
+                        noteAjoutee = True
+                        break
+                if not noteAjoutee : newNotes.append(note.copy())
+
+                notesPassees += 1
+                if not communication is None and notesPassees > 20:
+                    communication.addValue(notesPassees)
+                    notesPassees = 0
+
+
+        if not communication is None : communication.raz()
+
+        notesPassees = 0
+        for note in newNotes :
             dureePoincon = float(self._morceau._taillePoincon / self._morceau._DST)
             temps_courant = note.timeIn
             while temps_courant < note.timeOut:
@@ -34,12 +68,10 @@ class Monf :
                 temps_courant += 0.9*dureePoincon
 
             # Barre de progression
-            if not communication is None and notesPassees > 100:
-                communication.ajouterNote.emit(notesPassees)
+            if not communication is None and notesPassees > 20:
+                communication.addValue(notesPassees)
                 notesPassees=0
             notesPassees += 1
-
-        if not communication is None : communication.finir.emit()
 
     def addPoincon(self, hauteurNote, temps) :
         """
@@ -91,6 +123,46 @@ class Monf :
         Retourne le temps total du morceau
         """
         return self._morceau.getTimeLength()
+
+    def initialiser_imprimer(self) :
+        """
+        Lance l'impression
+        """
+        linKernighan = self.rechercheChemin()
+        nb_segments = linKernighan.getNbSegments()
+        segments = []
+
+        imprimante = Imprimante()
+        input("Prêt pour l'expérience de ta vie ?")
+        #imprimante.initialise()
+##        imprimante.debut_rentrer_poincon()
+        input("Valide pour arrêter le bloc")
+        #imprimante.fin_rentrer_poincon()
+        i=0
+        id_segment = 0
+        linKernighan.calculSegment(0)
+        while id_segment < nb_segments :
+            while not linKernighan.getLastSegmentPret() >= id_segment :
+                time.sleep(0.1)
+            segmentAImprimer = linKernighan.getDernierSegmentCalcule()
+            if id_segment+1 < nb_segments and linKernighan.getLastSegmentPret() == id_segment: #Si ce n'est pas le dernier segment
+                 thread = threading.Thread(None, linKernighan.calculSegment, None, (id_segment+1,))
+                 thread.start()
+            for point in segmentAImprimer :
+                i+=1
+                x=round(point.getX(), 2)
+                y=round(point.getY(), 2)
+                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
+                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
+                #imprimante.poinconne(x, y)
+            id_segment+=1
+            print("recalage")
+            #imprimante.recalage_x()
+        #imprimante.fin_impression()
+        input("valider pour sortir le carton")
+        #imprimante.debut_sortir_carton()
+        input("valider quand le carton est totalement sorti")
+        #imprimante.fin_sortir_carton()
 
     def rechercheChemin(self) :
         pointsPoincons = []

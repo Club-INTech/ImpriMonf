@@ -9,7 +9,7 @@
 # Licence:     WTF
 #-------------------------------------------------------------------------------
 
-from PyQt4 import QtGui, QtCore, Qt
+from PyQt4 import QtGui, QtCore
 
 from note import Note, getNumberOctave
 from controlZ import ControlZ, Action
@@ -467,7 +467,6 @@ if __name__ == '__main__':
     sys.path.append("../libMidi/midi")
 
     import morceau
-    import monf
     m = morceau.Morceau("../../../multimedia/MIDIFILES/TEST1.mid")
     monfFile = m.parseOutput()
 

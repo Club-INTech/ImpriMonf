@@ -7,7 +7,8 @@ class OptionsCarton(QtGui.QDockWidget) :
         QtGui.QDockWidget.__init__(self, parent)
         self.parent = parent
         self.setWindowTitle("Options")
-        self.setFeatures(QtGui.QDockWidget.DockWidgetMovable)
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        self.monf = None
         self.initialize()
 
     def initialize(self) :
@@ -28,12 +29,15 @@ class OptionsCarton(QtGui.QDockWidget) :
 
         self.setWidget(self.widget)
 
-class LanceurImpression(QtGui.QDockWidget) :
+    def reloadMonf(self, monf) :
+        self.monf = monf
+
+class LanceurConversion(QtGui.QDockWidget) :
     def __init__(self, parent) :
         QtGui.QDockWidget.__init__(self, parent)
         self.parent = parent
-        self.setWindowTitle("Lancement de l'impression")
-        self.setFeatures(QtGui.QDockWidget.DockWidgetMovable)
+        self.setWindowTitle("Lancement de la conversion")
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.monf = None
         self.initialize()
 
@@ -41,16 +45,13 @@ class LanceurImpression(QtGui.QDockWidget) :
         self.widget = QtGui.QWidget(self)
         layout = QtGui.QGridLayout(self)
 
-        self.boutonLancement = QtGui.QPushButton("Imprimer", self.widget)
         self.boutonConversion = QtGui.QPushButton("Convertir", self.widget)
         self.boutonConversion.clicked.connect(self.convertirMorceau)
         self.progressBarMonf = ProgressBarMonf(self.widget)
         self.progressBarMonf.setBouton(self.boutonConversion)
 
-        layout.addWidget(self.boutonLancement, 0, 0)
-        layout.addWidget(self.boutonConversion,0,1)
-        layout.addWidget(self.progressBarMonf, 1, 0)
-
+        layout.addWidget(self.boutonConversion,0,0)
+        layout.addWidget(self.progressBarMonf, 0,1)
 
         self.widget.setLayout(layout)
 
@@ -63,6 +64,106 @@ class LanceurImpression(QtGui.QDockWidget) :
     def convertirMorceau(self) :
         self.progressBarMonf.start()
 
+class RecalageEtFinDImpression(QtGui.QDockWidget) :
+    def __init__(self, parent) :
+        QtGui.QDockWidget.__init__(self, parent)
+        self.parent = parent
+        self.setWindowTitle("Recalage et Fin d'impression")
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        self.monf = None
+        self.imprimante = None
+        self.initialize()
+
+    def initialize(self) :
+        self.widget = QtGui.QWidget(self)
+        layout = QtGui.QGridLayout(self)
+
+        self.boolRecalage = "Recaler"
+        self.recalerBouton = QtGui.QPushButton(self.boolRecalage, self.widget)
+        self.recalerBouton.clicked.connect(self.recalerAction)
+        self.recalerBouton.setEnabled(False)
+
+        self.boolFin = "Sortir le carton"
+        self.finBouton = QtGui.QPushButton(self.boolFin, self.widget)
+        self.finBouton.clicked.connect(self.finAction)
+        self.finBouton.setEnabled(False)
+
+        layout.addWidget(self.recalerBouton,0,0)
+        layout.addWidget(self.finBouton,1,0)
+
+        self.widget.setLayout(layout)
+
+        self.setWidget(self.widget)
+
+    def reloadMonf(self, monf) :
+        self.monf = monf
+
+    def reloadImprimante(self, imprimante) :
+        self.imprimante = imprimante
+        if not self.imprimante is None :
+            self.recalerBouton.setEnabled(True)
+            self.finBouton.setEnabled(True)
+
+    def recalerAction(self) :
+        if self.boolRecalage == "Recaler" :
+            if not self.imprimante is None :
+                self.imprimante.debut_rentrer_poincon()
+                self.boolRecalage = "OK"
+        else :
+            if not self.imprimante is None :
+                self.imprimante.fin_rentrer_poincon()
+                self.boolRecalage = "Recaler"
+
+        self.recalerBouton.setText(self.boolRecalage)
+
+    def finAction(self) :
+        if self.boolFin == "Sortir le carton" :
+            if not self.imprimante is None :
+                self.imprimante.debut_sortir_carton()
+                self.boolFin = "Arrêter"
+        else :
+            if not self.imprimante is None :
+                self.imprimante.fin_sortir_carton()
+                self.boolFin = "Sortir le carton"
+
+        self.recalerBouton.setText(self.boolFin)
+
+class Impression(QtGui.QDockWidget) :
+    def __init__(self, parent) :
+        QtGui.QDockWidget.__init__(self, parent)
+        self.parent = parent
+        self.setWindowTitle("Impression")
+        self.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        self.monf = None
+        self.imprimante = None
+        self.initialize()
+
+    def initialize(self) :
+        self.widget = QtGui.QWidget(self)
+        layout = QtGui.QGridLayout(self)
+
+        self.imprimerBouton = QtGui.QPushButton("Imprimer", self.widget)
+        self.imprimerBouton.clicked.connect(self.imprimerAction)
+        self.imprimerBouton.setEnabled(False)
+
+        layout.addWidget(self.imprimerBouton,0,0)
+
+        self.widget.setLayout(layout)
+
+        self.setWidget(self.widget)
+
+    def reloadMonf(self, monf) :
+        self.monf = monf
+
+    def reloadImprimante(self, imprimante) :
+        self.imprimante = imprimante
+        if not self.imprimante is None :
+            self.imprimerBouton.setEnabled(True)
+
+    def imprimerAction(self) :
+        pass
+
+# USELESS BITCH
 class EditionMorceau(QtGui.QDockWidget) :
     def __init__(self, parent) :
         QtGui.QDockWidget.__init__(self, parent)
