@@ -1,6 +1,7 @@
 ﻿from PyQt4 import QtGui, QtCore
 
 from progressBar import ProgressBarMonf, ProgressBarImpression
+import time
 
 class OptionsCarton(QtGui.QDockWidget) :
     def __init__(self, parent) :
@@ -103,6 +104,7 @@ class RecalageEtFinDImpression(QtGui.QDockWidget) :
     def recalerAction(self) :
         if self.boolRecalage == "Recaler" :
             if not self.imprimante is None :
+                self.imprimante.initialise()
                 self.imprimante.debut_rentrer_poincon()
                 self.boolRecalage = "OK"
         else :
