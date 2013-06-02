@@ -1,6 +1,7 @@
 ﻿from serial import Serial
 import os
 import time
+from threading import Lock
 
 class Imprimante:
     """
@@ -31,6 +32,9 @@ class Imprimante:
 
         #recherche du port série
         self.attribuer()
+        
+        #mutex d'accès à la série
+        self.mutex = Lock()
 
     def attribuer(self):
         """
@@ -103,6 +107,9 @@ class Imprimante:
 
         Une liste messages d'un seul élément : ["chaine"] peut éventuellement être remplacée par l'élément simple : "chaine".  #userFriendly
         """
+        
+        self.mutex.acquire()
+        
         if not type(messages) is list:
             #permet l'envoi d'un seul message, sans structure de liste
             messages = [messages]
@@ -142,7 +149,10 @@ class Imprimante:
                 # print("\t réponse >"+reponse+"<")#DEBUG
                 time.sleep(0.05)
             reponses.append(reponse)
+            
+        self.mutex.release()
         return reponses
+        
 
     def serie_prete(self):
         return self.prete
