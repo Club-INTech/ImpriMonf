@@ -1,6 +1,6 @@
 ﻿from PyQt4 import QtGui, QtCore
 
-from progressBar import ProgressBarMonf
+from progressBar import ProgressBarMonf, ProgressBarImpression
 
 class OptionsCarton(QtGui.QDockWidget) :
     def __init__(self, parent) :
@@ -46,7 +46,6 @@ class LanceurConversion(QtGui.QDockWidget) :
         layout = QtGui.QGridLayout(self)
 
         self.boutonConversion = QtGui.QPushButton("Convertir", self.widget)
-        self.boutonConversion.clicked.connect(self.convertirMorceau)
         self.progressBarMonf = ProgressBarMonf(self.widget)
         self.progressBarMonf.setBouton(self.boutonConversion)
 
@@ -60,9 +59,6 @@ class LanceurConversion(QtGui.QDockWidget) :
     def reloadMonf(self, monf) :
         self.monf = monf
         self.progressBarMonf.setMonf(self.monf)
-
-    def convertirMorceau(self) :
-        self.progressBarMonf.start()
 
 class RecalageEtFinDImpression(QtGui.QDockWidget) :
     def __init__(self, parent) :
@@ -126,7 +122,8 @@ class RecalageEtFinDImpression(QtGui.QDockWidget) :
                 self.imprimante.fin_sortir_carton()
                 self.boolFin = "Sortir le carton"
 
-        self.recalerBouton.setText(self.boolFin)
+        self.finBouton.setText(self.boolFin)
+
 
 class Impression(QtGui.QDockWidget) :
     def __init__(self, parent) :
@@ -143,10 +140,13 @@ class Impression(QtGui.QDockWidget) :
         layout = QtGui.QGridLayout(self)
 
         self.imprimerBouton = QtGui.QPushButton("Imprimer", self.widget)
-        self.imprimerBouton.clicked.connect(self.imprimerAction)
         self.imprimerBouton.setEnabled(False)
 
+        self.progressBarImpression = ProgressBarImpression(self)
+        self.progressBarImpression.setBouton(self.imprimerBouton)
+
         layout.addWidget(self.imprimerBouton,0,0)
+        layout.addWidget(self.progressBarImpression, 1,0)
 
         self.widget.setLayout(layout)
 
@@ -154,14 +154,14 @@ class Impression(QtGui.QDockWidget) :
 
     def reloadMonf(self, monf) :
         self.monf = monf
+        self.progressBarImpression.setMonf(monf)
 
     def reloadImprimante(self, imprimante) :
         self.imprimante = imprimante
+        self.progressBarImpression.setImprimante(self.imprimante)
+
         if not self.imprimante is None :
             self.imprimerBouton.setEnabled(True)
-
-    def imprimerAction(self) :
-        pass
 
 # USELESS BITCH
 class EditionMorceau(QtGui.QDockWidget) :

@@ -1,6 +1,7 @@
 ﻿import note
 from pathfinding import LinKernighan, Point
 from imprimante import Imprimante
+import time
 
 class Monf :
     """
@@ -82,14 +83,16 @@ class Monf :
         else :
             self._poincons[hauteurNote] = [temps]
 
-    def getAllPoincons(self) :
+    def getAllPoincons(self, force=False) :
         """
         Retourne l'ensemble des poincons du morceau. Merge l'ensemble des poincons de toutes les tracks
         """
-        return self._poincons
+        if not hasattr(self, "_poinconsImpression") or force : self._poinconsImpression = dict(self._poincons)
+
+        return self._poinconsImpression
 
     def getNombrePoincons(self, poincons=None):
-        if poincons is None : poincons = self.getAllPoincons()
+        if poincons is None : poincons = self.getAllPoincons(force=True)
         else : poincons = self._poincons
         a = 0
         for k in poincons.keys() :
@@ -124,7 +127,7 @@ class Monf :
         """
         return self._morceau.getTimeLength()
 
-    def initialiser_imprimer(self) :
+    def imprimer(self, imprimante, communication = None) :
         """
         Lance l'impression
         """
@@ -132,12 +135,6 @@ class Monf :
         nb_segments = linKernighan.getNbSegments()
         segments = []
 
-        imprimante = Imprimante()
-        input("Prêt pour l'expérience de ta vie ?")
-        #imprimante.initialise()
-##        imprimante.debut_rentrer_poincon()
-        input("Valide pour arrêter le bloc")
-        #imprimante.fin_rentrer_poincon()
         i=0
         id_segment = 0
         linKernighan.calculSegment(0)
@@ -152,17 +149,14 @@ class Monf :
                 i+=1
                 x=round(point.getX(), 2)
                 y=round(point.getY(), 2)
-                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
-                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
-                #imprimante.poinconne(x, y)
+                avancementImpression = i/self.getNombrePoincons()*100
+                imprimante.poinconne(x, y)
+##                time.sleep(1)
+                if not communication is None :
+                    communication.poinconFait()
             id_segment+=1
-            print("recalage")
-            #imprimante.recalage_x()
-        #imprimante.fin_impression()
-        input("valider pour sortir le carton")
-        #imprimante.debut_sortir_carton()
-        input("valider quand le carton est totalement sorti")
-        #imprimante.fin_sortir_carton()
+            imprimante.recalage_x()
+        imprimante.fin_impression()
 
     def rechercheChemin(self) :
         pointsPoincons = []

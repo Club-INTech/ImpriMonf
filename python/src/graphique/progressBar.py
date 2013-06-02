@@ -1,8 +1,39 @@
 ﻿from PyQt4 import QtCore, QtGui
 
-class CommunicateMonfConversion(QtCore.QObject) :
-    ajouterNote = QtCore.pyqtSignal(int)
-    finir = QtCore.pyqtSignal()
+class AbstractProgressBar(QtGui.QProgressBar) :
+    def __init__(self, parent) :
+        QtGui.QProgressBar.__init__(self, parent)
+        self.setMinimum(0)
+        self.boutton = None
+        self.monf = None
+        self.imprimante = None
+        self.thread = None
+        self.parent = parent
+
+    def setMonf(self, monf) :
+        self.monf = monf
+
+    def setImprimante(self, imprimante) :
+        self.imprimante = imprimante
+
+    def setBouton(self, bouton) :
+        self.bouton = bouton
+        self.bouton.clicked.connect(self.start)
+
+    def start(self) :
+        if not self.bouton is None : self.bouton.setDisabled(True)
+        self.thread.start()
+
+    def initialisation(self) :
+        self.setMaximum(self.minimum())
+
+    def raz(self) :
+        self.setValue(self.minimum())
+
+    def finir(self) :
+        if not self.bouton is None : self.bouton.setEnabled(True)
+        self.setValue(self.maximum())
+
 
 class ConversionMonfThread(QtCore.QThread) :
     def __init__(self, parent) :
@@ -34,16 +65,17 @@ class ImpressionThread(QtCore.QThread) :
         QtCore.QThread.__init__(self)
         self.parent = parent
 
+    def run(self) :
+        self.parent.monf.imprimer(self.parent.imprimante, self)
+
+    def poinconFait(self) :
+        self.emit(QtCore.SIGNAL("poinconFait()"))
 
 
-
-class ProgressBarMonf(QtGui.QProgressBar) :
+class ProgressBarMonf(AbstractProgressBar) :
     def __init__(self, parent) :
-        QtGui.QProgressBar.__init__(self, parent)
-        self.setMinimum(0)
-        self.boutton = None
+        AbstractProgressBar.__init__(self, parent)
         self.thread = ConversionMonfThread(self)
-
         self.connect(self.thread, QtCore.SIGNAL("finished()"), self.finir)
         self.connect(self.thread, QtCore.SIGNAL("terminated()"), self.finir)
         self.connect(self.thread, QtCore.SIGNAL("addValue(int)"), self.addValue)
@@ -52,20 +84,7 @@ class ProgressBarMonf(QtGui.QProgressBar) :
         self.connect(self.thread, QtCore.SIGNAL("raz()"), self.raz)
 
     def setMonf(self, monf) :
-        self.monf = monf
-        self.setValue(self.minimum())
-
-    def setBouton(self, bouton) :
-        self.bouton = bouton
-
-    def start(self) :
-        if not self.bouton is None : self.bouton.setDisabled(True)
-        self.thread.start(QtCore.QThread.TimeCriticalPriority)
-
-    def initialisation(self) :
-        self.setMaximum(self.minimum())
-
-    def raz(self) :
+        AbstractProgressBar.setMonf(self,monf)
         self.setValue(self.minimum())
 
     def addValue(self, valeur):
@@ -75,7 +94,7 @@ class ProgressBarMonf(QtGui.QProgressBar) :
         self.setValue(self.value()+valeur)
 
     def finir(self) :
-        self.setValue(self.maximum())
+        AbstractProgressBar.finir(self)
         msgBox = QtGui.QMessageBox(self)
         msgBox.setWindowTitle("Ça c'est fait !")
         msgBox.setText("Conversion effectuée ! " + str(self.monf.getNombrePoincons()) + " coups de poinçons seront imprimés.") #8466
@@ -85,12 +104,34 @@ class ProgressBarMonf(QtGui.QProgressBar) :
         msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
         msgBox.exec_()
 
-        if not self.bouton is None : self.bouton.setEnabled(True)
-
-class ProgressBarImpression(QtGui.QProgressBar) :
+class ProgressBarImpression(AbstractProgressBar) :
     def __init__(self, parent) :
-        QtGui.QProgressBar.__init__(self, parent)
-        self.setMinimum(0)
-        self.boutton = None
+        AbstractProgressBar.__init__(self, parent)
         self.thread = ImpressionThread(self)
-        
+
+        self.connect(self.thread, QtCore.SIGNAL("finished()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("terminated()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("poinconFait()"), self.poinconFait)
+
+    def poinconFait(self) :
+        self.setValue(self.value() + 1)
+
+    def start(self) :
+        self.setMaximum(self.monf.getNombrePoincons())
+
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("ATTENTION !")
+        msgBox.setText("Avez-vous pensé à lancer la procédure de recalage du poinçon ?") #8466
+        msgBox.setIcon(QtGui.QMessageBox.Warning)
+        msgBox.setInformativeText("Si vous ne l'avez pas fait, cliquez sur Annuler, lancer la procédure, puis relancez l'impression. Cliquez sur OK si la procédure a déjà été faite.")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        ret = msgBox.exec_()
+
+        if ret == QtGui.QMessageBox.Ok : AbstractProgressBar.start(self)
+
+
+    def finir(self) :
+        AbstractProgressBar.finir(self)
+
+
