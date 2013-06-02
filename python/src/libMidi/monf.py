@@ -82,8 +82,6 @@ class Monf :
                 notesPassees=0
             notesPassees += 1
 
-        print (self._poincons)
-
     def addPoincon(self, hauteurNote, temps) :
         """
         Ajoute un poincon
