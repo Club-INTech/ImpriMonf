@@ -10,11 +10,16 @@ class Imprimante:
 
     #constantes de classe pour la liaison série
     baudrate = 9600
-    ping = '#'
+    identifiant = '#'
+    symb_acquittement =  '_'
     newLine = "\n"
 
     #écart entre le recalage du bloc moteur et l'origine 0 (en mm)
     origine = 5.2
+    
+    #nombre de mm que le bloc poincon effectue à gauche de l'origine pour être sur de se recaler sur la butée
+    #plus sur si plus élevée, mais fait du bruit plus longtemps et abime le moteur
+    marge_recalage = 5
 
     def __init__(self):
 
@@ -69,7 +74,7 @@ class Imprimante:
                 rep = self._clean_string(str(instanceSerie.readline(),"utf-8"))
 
                 #lecture de l'identifiant
-                if rep == Imprimante.ping:
+                if rep == Imprimante.identifiant:
                     print("imprimante trouvée sur "+source)
                     self.serie = instanceSerie
                     break
@@ -92,11 +97,11 @@ class Imprimante:
     def communiquer(self, messages, nb_lignes_reponse):
         """
         Méthode de communication via la série.
-        Envoie d'abord au destinataire une liste de trames au périphériques
+        Envoie d'abord au destinataire une liste de trames
         (celles ci sont toutes acquittées une par une pour éviter le flood),
         puis récupère nb_lignes_reponse trames sous forme de liste.
 
-        Une liste messages d'un seul élément : ["chaine"] peut éventuellement Ãªtre remplacée par l'élément simple : "chaine".  #userFriendly
+        Une liste messages d'un seul élément : ["chaine"] peut éventuellement être remplacée par l'élément simple : "chaine".  #userFriendly
         """
         if not type(messages) is list:
             #permet l'envoi d'un seul message, sans structure de liste
@@ -114,13 +119,15 @@ class Imprimante:
             #chaque envoi est acquitté par le destinataire, pour permettre d'émettre en continu sans flooder la série
             try:
                 acquittement = ""
-                while acquittement != "_":
+                while acquittement != Imprimante.symb_acquittement:
                     acquittement = self._clean_string(str(self.serie.readline(),"utf-8"))
                     # print("\t acquittement : >"+acquittement+"<")#DEBUG
 
                     if acquittement == "":
                         #renvoi de la trame
                         self.serie.write(bytes(str(message) + Imprimante.newLine,"utf-8"))
+                        
+                    time.sleep(0.05)
 
             except Exception as e:
                 print("Exception levée lors de l'acquittement : "+e)
@@ -129,10 +136,11 @@ class Imprimante:
         #liste des réponses
         reponses = []
         for i in range(nb_lignes_reponse):
-            reponse = "_"
-            while reponse == "_":
+            reponse = ''
+            while reponse == Imprimante.symb_acquittement or reponse == '':
                 reponse = self._clean_string(str(self.serie.readline(),"utf-8"))
                 # print("\t réponse >"+reponse+"<")#DEBUG
+                time.sleep(0.05)
             reponses.append(reponse)
         return reponses
 
@@ -144,6 +152,11 @@ class Imprimante:
 #########################################################
 
     def _pap_aller_a(self, position):
+        """
+        Déplace le moteur pap à la position consigne (donnée en mm)
+        Cette méthode est blocante et attend l'acquittement de l'imprimante.
+        """
+        
         self.communiquer(["go_pap",int(position*1000)],0)
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
@@ -189,7 +202,7 @@ class Imprimante:
         while not int(self.communiquer("acq?",1)[0]):
             time.sleep(0.1)
 
-        #ordre de poinçonnage (l'attente se fait grâce à une trame renvoyée en fin de poinçonnage)
+        #procédure de poinçonnage
         self.communiquer("poincon_bas",0)
         time.sleep(0.5)
         self.communiquer("poincon_haut",0)
@@ -201,27 +214,29 @@ class Imprimante:
         Recale le moteur pas à pas sur une butée pour pallier aux glissements.
         """
 
-        self._pap_aller_a(-20)
+        self._pap_aller_a(-Imprimante.marge_recalage)
         self.communiquer("reset_pap",0)
         self._pap_aller_a(Imprimante.origine)
         self.communiquer("reset_pap",0)
         
-    #TODO
     def lit_pistes(self):
         """
         Renvoit une liste des id des trous lus à la position courante.
+        0 est la piste la plus aïgue, 26 la plus grave.
         Renvoit [] si aucun trou détecté.
         """
 
-        #lit les pistes et renvoit le nombre de trous
-        nb_trous = int(self.communiquer("lecture",1)[0])
+        #lit les pistes et renvoit leur état (troué ou non) en un seul entier
+        ligne = int(self.communiquer("lecture",1)[0])
 
-        if nb_trous:
-            #récupère les id des trous et retourne la liste d'entiers
-            liste_id = list(map(lambda x: int(x), self.communiquer("get_ids",nb_trous)))
-            return liste_id
-        else:
-            return []
+        trous = []
+        k = 0
+        while ligne > 0:
+            if ligne % 2:
+                trous.append(k)
+            ligne >>= 1
+            k += 1
+        return trous
 
     def fin_impression(self):
         """
