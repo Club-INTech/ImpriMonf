@@ -64,10 +64,10 @@ void setup() {
     pinMode(pinBaisseVerin, OUTPUT);
     pinMode(pinLeveVerin, OUTPUT);
     
-    pinMode(pinlecture, INPUT);
+    //pinMode(pinlecture, INPUT);
     
     //les 5 premiers bits du port C adressent la photodiode lue
-    DDRC |= 0b00011111;
+    //DDRC |= 0b00011111;
     
     //immobilisation initiale du moteur
     analogWrite(pinPWM, 0);
