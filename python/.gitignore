@@ -2,3 +2,4 @@ dist/*
 build/*
 *.e4p
 _eric5*/*
+*.mid

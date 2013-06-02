@@ -22,7 +22,7 @@ class LinKernighan():
         self.INF = 99999
         self.vitesseX = 6.6 # mm/sec
         self.vitesseY = 45.6 # mm/sec
-        self.longueurSegment = 500 # distance de segmentation (en mm).
+        self.longueurSegment = 400 # distance de segmentation (en mm).
         self.points = points
         self.lastSegmentPret = -1
         #print ("Avant traitement :")
