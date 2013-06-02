@@ -79,7 +79,7 @@ class Imprimante:
 
                 #lecture de l'identifiant
                 if rep == Imprimante.identifiant:
-                    print("imprimante trouvée sur "+source)
+                    #print("imprimante trouvée sur "+source)
                     self.serie = instanceSerie
                     break
                 else:
@@ -179,6 +179,7 @@ class Imprimante:
 
         self.communiquer(["set_mot",0],0)
         self.communiquer("asserv_on",0)
+        time.sleep(0.5)
 
     def debut_rentrer_poincon(self):
         """
@@ -255,6 +256,7 @@ class Imprimante:
         
         self.communiquer(["set_mot",0],0)
         self.communiquer("asserv_off",0)
+        time.sleep(0.5)
         
     def debut_sortir_carton(self):
         """
@@ -263,6 +265,7 @@ class Imprimante:
         """
 
         self.communiquer("asserv_on",0)
+        time.sleep(0.5)
         self.communiquer(["go_mot",999999999],0)
 
     def fin_sortir_carton(self):
@@ -272,3 +275,4 @@ class Imprimante:
 
         self.communiquer(["set_mot",0],0)
         self.communiquer("asserv_off",0)
+        time.sleep(0.5)
