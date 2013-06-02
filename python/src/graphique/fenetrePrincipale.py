@@ -251,7 +251,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.modificate()
         self.refreshAnnulerRefaire()
 
-    def lancerPoinconnage(self) : #Version qui poinçonne pas
+    def lancerPoinconnage(self) :
         try :
             self.imprimante = Imprimante()
         except :

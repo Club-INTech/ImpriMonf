@@ -30,6 +30,9 @@ class LinKernighan():
         self.pointsTries = self.points
         self.segments = self.segmentePoints()
         self.segmentsTries = []
+
+    """
+    Calcule tous les segments en une fois.
     """
     def calculSegments(self):
         print ("Avant tout calcul, dans l'ordre aléatoire initial : ")
@@ -58,12 +61,12 @@ class LinKernighan():
                 self.calcule_parcours_2opt()
                 #print (" Apres calcul 2-opt :")
                 #print(" longueur : " + str(self.distanceTotaleParcours()))
-                "" "
+                """
                 print ("Algo 3-opt en cours ...")
                 self.calcule_parcours_3opt()
                 print (" Apres calcul 3-opt :")
                 print(" longueur : " + str(self.distanceTotaleParcours()))
-                "" "
+                """
                 self.segmentsTries.append(self.pointsTries)
                 #print(self.distanceTotaleParcoursSegmente())
                 nbSegmentsTraites+=1
@@ -71,9 +74,11 @@ class LinKernighan():
                 print("Optimisation du temps de poinçonnage : "+"%.2f"%avancement+"%")
         print("Distance totale : "+str(self.distanceTotaleParcoursSegmente()))
         return self.segmentsTries
-    """
 
-    """Calcule un segment donné """
+
+    """
+    Calcule un segment donné. Utilisé par les threads.
+    """
     def calculSegment(self, id_segment):
         segment = self.segments[id_segment]
         if len(segment) > 0 :
@@ -84,40 +89,33 @@ class LinKernighan():
             #print ("Apres calcul plus proche voisin :")
             #self.afficherPoints(self.pointsTries)   #décommenter pour avoir l'affichage de la liste des points.
             print(" PPV : longueur : "+str(self.distanceTotaleParcours()))
-            """
-            #print ("Algo 2-opt en cours ...")
-            self.calcule_parcours_2opt()
-            #print (" Apres calcul 2-opt :")
-            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
-
-            #print ("Algo 2eme 2-opt en cours ...")
-            self.calcule_parcours_2opt()
-            #print (" Apres calcul 2-opt :")
-            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
-
-            #print ("Algo 3eme 2-opt en cours ...")
-            self.calcule_parcours_2opt()
-            #print (" Apres calcul 2-opt :")
-            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
-
-            #print ("Algo 3-opt en cours ...")
-            self.calcule_parcours_3opt()
-            #print (" Apres calcul 3-opt :")
-            print(" 3-opt : longueur : " + str(self.distanceTotaleParcours()))
-            """
 
             #Choix de 2-opt ou 3-opt :
-            self.derniereDistanceTotale = self.distanceTotaleParcours()
-            for i in range(2):
+            derniereDistanceTotale = self.distanceTotaleParcours()
+            if len(self.pointsTries) > 150 :
+                nb3opt = 0
+            elif len(self.pointsTries) > 80 :
+                nb3opt = 1
+            else :
+                nb3opt = 2
+            for i in range(nb3opt):
                 self.calcule_parcours_3opt()
                 print(" 3-opt : longueur : " + str(self.distanceTotaleParcours()))
                 for j in range(5):
                     self.calcule_parcours_2opt()
                     print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
-                    if self.distanceTotaleParcours() == self.derniereDistanceTotale :
+                    if self.distanceTotaleParcours() == derniereDistanceTotale :
                         break
                     else:
-                        self.derniereDistanceTotale = self.distanceTotaleParcours()
+                        derniereDistanceTotale = self.distanceTotaleParcours()
+            if nb3opt == 0 :
+                for j in range(5):
+                    self.calcule_parcours_2opt()
+                    print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
+                    if self.distanceTotaleParcours() == derniereDistanceTotale :
+                        break
+                    else:
+                        derniereDistanceTotale = self.distanceTotaleParcours()
 
             self.segmentsTries.append(self.pointsTries)
             #print(self.distanceTotaleParcoursSegmente())
@@ -177,6 +175,9 @@ class LinKernighan():
             j+=1
         return round(d,2)
 
+    """
+    Calcule le parcours optimal selon la méthode du plus proche voisin : après chaque
+    """
     def plusProcheVoisin(self):
         pointsTries = [self.points[0]]
         points_restants = self.points
@@ -205,22 +206,30 @@ class LinKernighan():
 
         return pointsTries
 
-    def echangerParcours(self, id1, id2):
+    """
+    Permet d'échanger 2 points dans self.pointsTries
+    """
+    def echangerPoints(self, id1, id2):
         temp=self.pointsTries[id2];
         self.pointsTries[id2]=self.pointsTries[id1];
         self.pointsTries[id1]=temp;
 
+    """
+    Renverse le parcours entre deux points. Utilisé dans les 2-opt et 3-opt.
+    """
     def renverserParcours(self, i, j):
         a = min(i,j)
         b = max(i,j)
         while a < b:
-            self.echangerParcours(a, b);
+            self.echangerPoints(a, b);
             a+=1
             b-=1
 
+    """
+    Echange deux portions de parcours. Utilisé notamment lors des parcours 3-opt
+    """
     #Attention : échange seulement des portions adjacentes :
     def echangerPortions(self, debutPortion1, finPortion1, debutPortion2, finPortion2):
-        #print("echangerPortions(self, "+str(debutPortion1)+", "+str(finPortion1)+", "+str(debutPortion2)+", "+str(finPortion2))
         if debutPortion2 == finPortion1 + 1:
             i = 0
             portion1 = []
@@ -240,21 +249,15 @@ class LinKernighan():
 			#échange de ces deux portions :
             inversion = portion2+portion1
             inversionPoints = portion2Points + portion1Points
-            #print("portion1 :"+str(portion1))
-            #print("portion2 :"+str(portion2))
-            #print("inversio :"+str(inversion))
             i=0
             while debutPortion1 + i <= finPortion2:
                 self.pointsTries[debutPortion1 + i] = inversionPoints[i]
-                #self.echangerParcours((debutPortion1 + i)%len(self.pointsTries), (inversion[i])%len(self.pointsTries))
-                #print("self.echangerParcours("+str((debutPortion1 + i)%len(self.pointsTries))+", "+str((inversion[i])%len(self.pointsTries))+")")
                 i+=1
         else:
             print("ERREUR : les portions à échanger ne sont pas consécutives !")
 
     """
-    différence de cout du parcours si on renversait le parcours entre les trous i et j
-    on "casse" 2 liens entre 2 trous et on les remplace par 2 autres
+    différence de cout du parcours si on renverse le parcours entre les trous i et j
     """
     def difference_cout(self, i, j):
         if j<len(self.pointsTries)-1:
@@ -263,20 +266,14 @@ class LinKernighan():
             return self.distance(self.pointsTries[i-1], self.pointsTries[j]) - self.distance(self.pointsTries[i-1], self.pointsTries[i])
 
 
-
     """
-     calcule un parcours 2-opt, c'est à dire qu'aucune permutation
-     de l'odre de parcours ne rend ce parcours plus court
+     calcule un parcours 2-opt
     """
     def calcule_parcours_2opt(self):
         for i in range(1, len(self.pointsTries)):
             for j in range(i+1, len(self.pointsTries)):
                 if self.difference_cout(i, j) < 0 :
                     self.renverserParcours(i, j)
-
-
-
-
 
 
     def calcule_parcours_3opt(self):
@@ -308,12 +305,23 @@ class LinKernighan():
                     surplusDistADEBCF = distAD + distBE + distCF - (distAB + distCD + distEF)
                     surplusDistADECBF = distAD + distCE + distBF - (distAB + distCD + distEF)
                     surplusDistAEDBCF = distAE + distBD + distCF - (distAB + distCD + distEF)
+                    debug = self.distanceTotaleParcours()
                     if surplusDistACBEDF < 0:
+                        print("A", end="")
                         self.renverserParcours(indexC, indexB)
                         self.renverserParcours(indexE, indexD)
+                        #print("A "+str(self.distanceTotaleParcours() - debug), end="")
                     elif surplusDistADEBCF < 0:
+                        print("B", end="")
                         self.echangerPortions(indexB, indexC, indexD, indexE)
-                        #print("ok", end="")
+                    elif surplusDistADECBF < 0:
+                        print("C", end="")
+                        self.renverserParcours(indexB, indexC)
+                        self.echangerPortions(indexB, indexC, indexD, indexE)
+                    elif surplusDistAEDBCF < 0:
+                        print("D", end="")
+                        self.renverserParcours(indexE, indexD)
+                        self.echangerPortions(indexB, indexC, indexD, indexE)
 
 """
 points = []
