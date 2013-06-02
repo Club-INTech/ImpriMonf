@@ -142,7 +142,7 @@ void loop(){
   //activation de l'asservissement
   else if (msg == "asserv_on") {
     digitalWrite(pinLeveVerin, HIGH);
-    delay(2000 * prescaler);
+    delay(2000);
     digitalWrite(pinLeveVerin, LOW);
     asserv_enable = true;
   }
@@ -151,7 +151,7 @@ void loop(){
   else if (msg == "asserv_off") {
     asserv_enable = false;
     digitalWrite(pinLeveVerin, HIGH);
-    delay(2000 * prescaler);
+    delay(2000);
     digitalWrite(pinLeveVerin, LOW);
   }
   
