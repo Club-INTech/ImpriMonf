@@ -59,21 +59,30 @@ class Monf :
 
         if not communication is None : communication.raz()
 
+
         notesPassees = 0
+        precision = .9
         for note in newNotes :
             dureePoincon = float(self._morceau._taillePoincon / self._morceau._DST)
-            temps_courant = note.timeIn
-            while temps_courant < note.timeOut:
-                if temps_courant + dureePoincon < note.timeOut : self.addPoincon(str(note), temps_courant)
-                else : self.addPoincon(str(note), note.timeOut)
+            temps_courant = note.timeIn + dureePoincon/2
+            self.addPoincon(str(note), temps_courant)
+            while temps_courant < (note.timeOut - dureePoincon/2):
+                temps_courant += precision*dureePoincon
+                if temps_courant < note.timeOut - dureePoincon/2 :
+                    self.addPoincon(str(note), temps_courant)
+                else :
+                    self.addPoincon(str(note), note.timeOut-dureePoincon/2)
+                    break
 
-                temps_courant += 0.9*dureePoincon
+
 
             # Barre de progression
             if not communication is None and notesPassees > 20:
                 communication.addValue(notesPassees)
                 notesPassees=0
             notesPassees += 1
+
+        print (self._poincons)
 
     def addPoincon(self, hauteurNote, temps) :
         """
