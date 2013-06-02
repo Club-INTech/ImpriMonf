@@ -100,6 +100,7 @@ class Monf :
             for temps in self.getAllPoincons()[hauteurNote] :
                 y = temps * self._morceau._DST
                 pointsPoincons.append(Point(x, y))
+                print("points.append(Point("+str(x)+", "+str(y)+"))")
             i = i+1
         linKernighan = LinKernighan(pointsPoincons)
         return linKernighan

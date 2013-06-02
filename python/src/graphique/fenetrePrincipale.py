@@ -294,15 +294,16 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         nb_segments = linKernighan.getNbSegments()
         segments = []
         #imprimante = Imprimante()
-        input("Prêt pour l'expérience de ta vie ?")
+        #input("Prêt pour l'expérience de ta vie ?")
         #imprimante.initialise()
         #imprimante.debut_rentrer_poincon()
-        input("Valide pour arrêter le bloc")
+        #input("Valide pour arrêter le bloc")
         #imprimante.fin_rentrer_poincon()
         i=0
         id_segment = 0
         linKernighan.calculSegment(0)
-        while id_segment < nb_segments :
+        #while id_segment < nb_segments :
+        if 42 :
             while not linKernighan.getLastSegmentPret() >= id_segment :
                 time.sleep(0.1)
             segmentAImprimer = linKernighan.getDernierSegmentCalcule()
@@ -314,15 +315,15 @@ class FenetrePrincipale(QtGui.QMainWindow) :
                 x=round(point.getX(), 2)
                 y=round(point.getY(), 2)
                 avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
-                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
+                #print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
                 #imprimante.poinconne(x, y)
             id_segment+=1
             print("recalage")
             #imprimante.recalage_x()
         #imprimante.fin_impression()
-        input("valider pour sortir le carton")
+        #input("valider pour sortir le carton")
         #imprimante.debut_sortir_carton()
-        input("valider quand le carton est totalement sorti")
+        #input("valider quand le carton est totalement sorti")
         #imprimante.fin_sortir_carton()
 
 

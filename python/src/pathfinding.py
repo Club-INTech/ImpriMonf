@@ -22,7 +22,7 @@ class LinKernighan():
         self.INF = 99999
         self.vitesseX = 6.6 # mm/sec
         self.vitesseY = 45.6 # mm/sec
-        self.longueurSegment = 300 # distance de segmentation (en mm).
+        self.longueurSegment = 500 # distance de segmentation (en mm).
         self.points = points
         self.lastSegmentPret = -1
         #print ("Avant traitement :")
@@ -78,30 +78,50 @@ class LinKernighan():
         segment = self.segments[id_segment]
         if len(segment) > 0 :
             self.points = list(segment)
+            print("segment de "+str(self.longueurSegment)+"mm contenant "+str(len(segment))+" pts")
             #print ("Algo plus proche voisin en cours sur "+str(len(segment))+"points")
             self.pointsTries = self.plusProcheVoisin()
             #print ("Apres calcul plus proche voisin :")
             #self.afficherPoints(self.pointsTries)   #décommenter pour avoir l'affichage de la liste des points.
-            #print(" longueur : "+str(self.distanceTotaleParcours()))
-
+            print(" PPV : longueur : "+str(self.distanceTotaleParcours()))
+            """
             #print ("Algo 2-opt en cours ...")
             self.calcule_parcours_2opt()
             #print (" Apres calcul 2-opt :")
-            #print(" longueur : " + str(self.distanceTotaleParcours()))
+            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
 
             #print ("Algo 2eme 2-opt en cours ...")
             self.calcule_parcours_2opt()
             #print (" Apres calcul 2-opt :")
-            #print(" longueur : " + str(self.distanceTotaleParcours()))
-            """
-            print ("Algo 3-opt en cours ...")
+            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
+
+            #print ("Algo 3eme 2-opt en cours ...")
+            self.calcule_parcours_2opt()
+            #print (" Apres calcul 2-opt :")
+            print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
+
+            #print ("Algo 3-opt en cours ...")
             self.calcule_parcours_3opt()
-            print (" Apres calcul 3-opt :")
-            print(" longueur : " + str(self.distanceTotaleParcours()))
+            #print (" Apres calcul 3-opt :")
+            print(" 3-opt : longueur : " + str(self.distanceTotaleParcours()))
             """
+
+            #Choix de 2-opt ou 3-opt :
+            self.derniereDistanceTotale = self.distanceTotaleParcours()
+            for i in range(2):
+                self.calcule_parcours_3opt()
+                print(" 3-opt : longueur : " + str(self.distanceTotaleParcours()))
+                for j in range(5):
+                    self.calcule_parcours_2opt()
+                    print(" 2-opt : longueur : " + str(self.distanceTotaleParcours()))
+                    if self.distanceTotaleParcours() == self.derniereDistanceTotale :
+                        break
+                    else:
+                        self.derniereDistanceTotale = self.distanceTotaleParcours()
+
             self.segmentsTries.append(self.pointsTries)
             #print(self.distanceTotaleParcoursSegmente())
-            print("Optimisation du temps de poinçonnage du segment n°"+str(id_segment)+": OK")
+            print("Optimisation du temps de poinçonnage du segment n°"+str(id_segment)+": OK ("+str(self.distanceTotaleParcours())+")")
         self.lastSegmentPret = id_segment
 
     def segmentePoints(self):
@@ -200,10 +220,34 @@ class LinKernighan():
 
     #Attention : échange seulement des portions adjacentes :
     def echangerPortions(self, debutPortion1, finPortion1, debutPortion2, finPortion2):
+        #print("echangerPortions(self, "+str(debutPortion1)+", "+str(finPortion1)+", "+str(debutPortion2)+", "+str(finPortion2))
         if debutPortion2 == finPortion1 + 1:
             i = 0
-            while debutPortion1 + i < finPortion2:
-                self.echangerParcours((debutPortion1 + i)%len(self.pointsTries), (debutPortion2 + i)%len(self.pointsTries));
+            portion1 = []
+            portion1Points = []
+			#Stockage en mémoire des 2 portions à échanger
+            while debutPortion1 + i <= finPortion1:
+                portion1.append(debutPortion1 + i)
+                portion1Points.append(self.pointsTries[debutPortion1 + i])
+                i+=1
+            i = 0
+            portion2 = []
+            portion2Points = []
+            while debutPortion2 + i <= finPortion2:
+                portion2.append(debutPortion2 + i)
+                portion2Points.append(self.pointsTries[debutPortion2 + i])
+                i+=1
+			#échange de ces deux portions :
+            inversion = portion2+portion1
+            inversionPoints = portion2Points + portion1Points
+            #print("portion1 :"+str(portion1))
+            #print("portion2 :"+str(portion2))
+            #print("inversio :"+str(inversion))
+            i=0
+            while debutPortion1 + i <= finPortion2:
+                self.pointsTries[debutPortion1 + i] = inversionPoints[i]
+                #self.echangerParcours((debutPortion1 + i)%len(self.pointsTries), (inversion[i])%len(self.pointsTries))
+                #print("self.echangerParcours("+str((debutPortion1 + i)%len(self.pointsTries))+", "+str((inversion[i])%len(self.pointsTries))+")")
                 i+=1
         else:
             print("ERREUR : les portions à échanger ne sont pas consécutives !")
