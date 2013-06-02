@@ -1,2 +1,4 @@
 dist/*
 build/*
+*.e4p
+_eric5*/*

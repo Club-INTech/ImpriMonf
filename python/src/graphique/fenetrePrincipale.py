@@ -11,7 +11,6 @@
 
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
-from progressBar import ProgressBarLoadingMonf
 from imprimante import Imprimante
 from dockWidgets import *
 import fenetreAide
@@ -29,7 +28,6 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.app = QApplication
         self.modifie = False
         self.monfFileName = None
-        self.layout = QtGui.QGridLayout(self)
         self.initUID()
 
     def initUID(self) :
@@ -154,18 +152,24 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         # Ajout de l'éditeur de monf et des dockwidget
         self.conteneurMonf = ConteneurMonf(self)
-        self.lanceurImpression = LanceurImpression(self)
+        self.lanceurConversion = LanceurConversion(self)
         self.optionsCarton = OptionsCarton(self)
+        self.impression = Impression(self)
+        self.recalageEtFinDImpression = RecalageEtFinDImpression(self)
 ##        self.editionMorceau = EditionMorceau(self)
 
         self.setCentralWidget(self.conteneurMonf)
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.optionsCarton)
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.lanceurImpression)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.lanceurConversion)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.impression)
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.recalageEtFinDImpression)
 ##        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.editionMorceau)
 
         self.setWindowTitle('Monf Editor')
         self.resize(900,600)
         self.refreshAnnulerRefaire()
+        self.nouveau()
+        self.reloadImprimante()
         self.show()
 
     # Indiquer qu'il y a eu des modifications
@@ -177,7 +181,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     # Nouveau fichier.
     def nouveau(self) :
         if not self.askSave() : return
-        self.conteneurMonf.reloadMonf()
+        self.reloadMonf(monf.Monf())
         self.modifie = False
         self.refreshAnnulerRefaire()
 
@@ -190,7 +194,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         monf_ = monf.openMonf(monfFileName)
 
-        self.conteneurMonf.reloadMonf(monf_)
+        self.reloadMonf(monf_)
         self.statusbar.showMessage("Fichier Monf " + monfFileName + " ouvert  !")
 
         self.setWindowTitle("Monf Editor - " +  monfFileName)
@@ -238,93 +242,27 @@ class FenetrePrincipale(QtGui.QMainWindow) :
             return
 
         morc = morceau.Morceau(midiFileName)
-        # Lancement de la conversion
-        popup = ProgressBarLoadingMonf(self, morc)
+
+        nouveauMonf = monf.Monf(morc)
+
+        self.reloadMonf(nouveauMonf)
 
         self.setWindowTitle("Monf Editor - " + midiFileName)
         self.modificate()
         self.refreshAnnulerRefaire()
 
-    """
-    # Action lançant le poinçonnage du carton
-    def lancerPoinconnage(self) :
-        print("test")
-        segments = self.conteneurMonf.getMonf().rechercheChemin()
-        imprimante = Imprimante()
-        input("Prêt pour l'expérience de ta vie ?")
-        imprimante.initialise()
-        imprimante.debut_rentrer_poincon()
-        input("Valide pour arrêter le bloc")
-        imprimante.fin_rentrer_poincon()
-        i=0
-
-
-        #TEST SCRIPTE :
-        imprimante.poinconne(88, 52)
-        imprimante.poinconne(88, 56)
-        imprimante.poinconne(88, 59)
-        imprimante.poinconne(88, 63)
-        imprimante.poinconne(88, 66)
-        imprimante.poinconne(88, 70)
-        imprimante.recalage_x()
-        imprimante.poinconne(88, 84)
-        imprimante.poinconne(88, 87)
-        imprimante.poinconne(88, 91)
-        imprimante.recalage_x()
-
-        for segment in segments :
-            for point in segment :
-                i+=1
-                x=round(point.getX(), 2)
-                y=round(point.getY(), 2)
-                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
-                print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
-                imprimante.poinconne(x, y)
-            print("recalage")
-            imprimante.recalage_x()
-
-        input("valider pour sortir le carton")
-        imprimante.debut_sortir_carton()
-        input("valider quand le carton est totalement sorti")
-        imprimante.fin_sortir_carton()
-    """
-
     def lancerPoinconnage(self) : #Version qui poinçonne pas
-        linKernighan = self.conteneurMonf.getMonf().rechercheChemin()
-        nb_segments = linKernighan.getNbSegments()
-        segments = []
-        #imprimante = Imprimante()
-        #input("Prêt pour l'expérience de ta vie ?")
-        #imprimante.initialise()
-        #imprimante.debut_rentrer_poincon()
-        #input("Valide pour arrêter le bloc")
-        #imprimante.fin_rentrer_poincon()
-        i=0
-        id_segment = 0
-        linKernighan.calculSegment(0)
-        #while id_segment < nb_segments :
-        if 42 :
-            while not linKernighan.getLastSegmentPret() >= id_segment :
-                time.sleep(0.1)
-            segmentAImprimer = linKernighan.getDernierSegmentCalcule()
-            if id_segment+1 < nb_segments and linKernighan.getLastSegmentPret() == id_segment: #Si ce n'est pas le dernier segment
-                 thread = threading.Thread(None, linKernighan.calculSegment, None, (id_segment+1,))
-                 thread.start()
-            for point in segmentAImprimer :
-                i+=1
-                x=round(point.getX(), 2)
-                y=round(point.getY(), 2)
-                avancementImpression = i/self.conteneurMonf.getMonf().getNombrePoincons()*100
-                #print("impression "+str(i)+"ème point ("+str(x)+","+str(y)+") : "+"%.2f"%avancementImpression+"%")
-                #imprimante.poinconne(x, y)
-            id_segment+=1
-            print("recalage")
-            #imprimante.recalage_x()
-        #imprimante.fin_impression()
-        #input("valider pour sortir le carton")
-        #imprimante.debut_sortir_carton()
-        #input("valider quand le carton est totalement sorti")
-        #imprimante.fin_sortir_carton()
+        try :
+            self.imprimante = Imprimante()
+        except :
+            msgBox = QtGui.QMessageBox(self)
+            msgBox.setWindowTitle("Imprimante non trouvée !")
+            msgBox.setText("L'imprimante n'a pas été trouvée.")
+            msgBox.setIcon(QtGui.QMessageBox.Critical)
+            msgBox.setInformativeText("Vérifiez sa connection, puis réessayez.")
+            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+            ret = msgBox.exec_()
+            return
 
 
 
@@ -335,6 +273,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         """
         if not self.modifie : return True
         msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("Attention !")
         msgBox.setText("Le fichier a été modifié.")
         msgBox.setIcon(QtGui.QMessageBox.Question)
         msgBox.setInformativeText("Voulez-vous sauvegarder les modifications ?")
@@ -356,6 +295,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def openCredits(self) :
         fenetreAide.Credits(self)
 
+
     def refreshAnnulerRefaire(self) :
         self.annulerAction.setDisabled(True)
         self.refaireAction.setDisabled(True)
@@ -363,6 +303,39 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def closeEvent(self, event) :
         if not self.askSave() : event.ignore()
         else : event.accept()
+
+    def getMonf(self) :
+        return self.monf
+
+    def reloadImprimante(self, imprimante=None) :
+        if imprimante is None :
+            try :
+                self.imprimante = Imprimante()
+            except :
+                msgBox = QtGui.QMessageBox(self)
+                msgBox.setWindowTitle("Imprimante non trouvée !")
+                msgBox.setText("L'imprimante n'a pas été trouvée.")
+                msgBox.setIcon(QtGui.QMessageBox.Critical)
+                msgBox.setInformativeText("Vérifiez sa connection, puis réessayez.")
+                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+                ret = msgBox.exec_()
+                self.imprimante = None
+
+        else :
+            self.imprimante = imprimante
+
+        if not self.imprimante is None :
+            self.recalageEtFinDImpression.reloadImprimante(self.imprimante)
+            self.impression.reloadImprimante(self.imprimante)
+
+    def reloadMonf(self, nouveauMonf):
+        self.monf = nouveauMonf
+        self.optionsCarton.reloadMonf(self.monf)
+        self.conteneurMonf.reloadMonf(self.monf)
+        self.lanceurConversion.reloadMonf(self.monf)
+        self.recalageEtFinDImpression.reloadMonf(self.monf)
+        self.impression.reloadMonf(self.monf)
+
 
 if __name__ == "__main__" :
 

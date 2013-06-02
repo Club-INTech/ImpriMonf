@@ -1,78 +1,137 @@
 ﻿from PyQt4 import QtCore, QtGui
 
-class SleepProgress(QtCore.QThread):
+class AbstractProgressBar(QtGui.QProgressBar) :
+    def __init__(self, parent) :
+        QtGui.QProgressBar.__init__(self, parent)
+        self.setMinimum(0)
+        self.boutton = None
+        self.monf = None
+        self.imprimante = None
+        self.thread = None
+        self.parent = parent
 
-    def __init__(self, morceau) :
-        QtCore.QThread.__init__(self)
-        self.morceau = morceau
-        self.add = None
-        self.fini = None
-        self.communicate = Communicate()
+    def setMonf(self, monf) :
+        self.monf = monf
 
-    def connection(self) :
-        self.communicate.ajouterNote.connect(self.add)
-        self.communicate.finir.connect(self.fini)
+    def setImprimante(self, imprimante) :
+        self.imprimante = imprimante
 
-    def run(self):
-        QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
-        self.monf = self.morceau.parseOutput(self.communicate)
-        self.communicate.finir.emit()
-        QtGui.QApplication.restoreOverrideCursor()
+    def setBouton(self, bouton) :
+        self.bouton = bouton
+        self.bouton.clicked.connect(self.start)
 
-class Communicate(QtCore.QObject) :
-    ajouterNote = QtCore.pyqtSignal(int)
-    finir = QtCore.pyqtSignal()
-
-class ProgressBarLoadingMonf(QtGui.QDialog):
-    def __init__(self, parent, morceau):
-        QtGui.QDialog.__init__(self, None)
-        self.parent=parent
-        self.morceau = morceau
-        self.thread = SleepProgress(morceau)
-
-        nombreDeNotes = len(morceau.getNotesBetween())
-
-        self.progressbar = QtGui.QProgressBar(self)
-        self.valeurProgression = 0
-        self.progressbar.setMinimum(0)
-        self.progressbar.setMaximum(nombreDeNotes)
-
-        texte = QtGui.QLabel("Importation du fichier MiDi en cours...", self)
-
-        mainLayout = QtGui.QGridLayout()
-        mainLayout.addWidget(self.progressbar, 1, 0)
-        mainLayout.addWidget(texte, 0,0)
-
-        self.setLayout(mainLayout)
-        self.setWindowTitle("Ça vient, ça vient")
-
-        self.thread.add = self.updatePBar
-        self.thread.fini = self.fini
-        self.thread.connection()
-
-
+    def start(self) :
+        if not self.bouton is None : self.bouton.setDisabled(True)
         self.thread.start()
 
-        QtGui.QDialog.exec_(self)
+    def initialisation(self) :
+        self.setMaximum(self.minimum())
+
+    def raz(self) :
+        self.setValue(self.minimum())
+
+    def finir(self) :
+        if not self.bouton is None : self.bouton.setEnabled(True)
+        self.setValue(self.maximum())
 
 
+class ConversionMonfThread(QtCore.QThread) :
+    def __init__(self, parent) :
+        QtCore.QThread.__init__(self)
+        self.parent = parent
 
-    def updatePBar(self, valeur=1):
-        self.progressbar.setValue(self.valeurProgression+valeur)
-        self.valeurProgression += valeur
+    def initialisation(self) :
+        self.emit(QtCore.SIGNAL("initialisation()"))
 
-    def fini(self):
-        self.parent.conteneurMonf.reloadMonf(self.thread.monf)
-        self.parent.statusbar.showMessage("Fichier MiDi importé  !")
-        self.reject(True)
-        self.thread.quit()
+    def reloadMaximum(self) :
+        self.initialisation()
+        notes = self.parent.monf.morceau().getNotesBetween()
+        self.emit(QtCore.SIGNAL("setMaximum(int)"), len(notes) +1)
+        return notes
 
-##    def close(self, force = False) :
-##        if force : QtGui.QDialog.close(self)
-##        else : pass
-    def reject(self, force=False) :
-        if not force :
-            pass
-        else :
-            QtGui.QDialog.reject(self)
+    def run(self) :
+        notes = self.reloadMaximum()
+        self.parent.monf.conversion(self, notes)
+
+    def addValue(self, valeur) :
+        self.emit(QtCore.SIGNAL("addValue(int)"), valeur)
+
+    def raz(self) :
+        self.emit(QtCore.SIGNAL("raz()"))
+
+
+class ImpressionThread(QtCore.QThread) :
+    def __init__(self, parent) :
+        QtCore.QThread.__init__(self)
+        self.parent = parent
+
+    def run(self) :
+        self.parent.monf.imprimer(self.parent.imprimante, self)
+
+    def poinconFait(self) :
+        self.emit(QtCore.SIGNAL("poinconFait()"))
+
+
+class ProgressBarMonf(AbstractProgressBar) :
+    def __init__(self, parent) :
+        AbstractProgressBar.__init__(self, parent)
+        self.thread = ConversionMonfThread(self)
+        self.connect(self.thread, QtCore.SIGNAL("finished()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("terminated()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("addValue(int)"), self.addValue)
+        self.connect(self.thread, QtCore.SIGNAL("setMaximum(int)"), self.setMaximum)
+        self.connect(self.thread, QtCore.SIGNAL("initialisation()"), self.initialisation)
+        self.connect(self.thread, QtCore.SIGNAL("raz()"), self.raz)
+
+    def setMonf(self, monf) :
+        AbstractProgressBar.setMonf(self,monf)
+        self.setValue(self.minimum())
+
+    def addValue(self, valeur):
+        """
+        Ajoute une note
+        """
+        self.setValue(self.value()+valeur)
+
+    def finir(self) :
+        AbstractProgressBar.finir(self)
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("Ça c'est fait !")
+        msgBox.setText("Conversion effectuée ! " + str(self.monf.getNombrePoincons()) + " coups de poinçons seront imprimés.") #8466
+        msgBox.setIcon(QtGui.QMessageBox.Information)
+        msgBox.setInformativeText("Vous pouvez désormais lancer l'impression")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        msgBox.exec_()
+
+class ProgressBarImpression(AbstractProgressBar) :
+    def __init__(self, parent) :
+        AbstractProgressBar.__init__(self, parent)
+        self.thread = ImpressionThread(self)
+
+        self.connect(self.thread, QtCore.SIGNAL("finished()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("terminated()"), self.finir)
+        self.connect(self.thread, QtCore.SIGNAL("poinconFait()"), self.poinconFait)
+
+    def poinconFait(self) :
+        self.setValue(self.value() + 1)
+
+    def start(self) :
+        self.setMaximum(self.monf.getNombrePoincons())
+
+        msgBox = QtGui.QMessageBox(self)
+        msgBox.setWindowTitle("ATTENTION !")
+        msgBox.setText("Avez-vous pensé à lancer la procédure de recalage du poinçon ?") #8466
+        msgBox.setIcon(QtGui.QMessageBox.Warning)
+        msgBox.setInformativeText("Si vous ne l'avez pas fait, cliquez sur Annuler, lancer la procédure, puis relancez l'impression. Cliquez sur OK si la procédure a déjà été faite.")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        ret = msgBox.exec_()
+
+        if ret == QtGui.QMessageBox.Ok : AbstractProgressBar.start(self)
+
+
+    def finir(self) :
+        AbstractProgressBar.finir(self)
+
 
