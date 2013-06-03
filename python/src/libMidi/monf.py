@@ -170,7 +170,7 @@ class Monf :
         pointsPoincons = []
         i=0
         for hauteurNote in self.getAllPoincons().keys() :	#On parcourt tous les coups de poinçon. #Attention : vérifier si les notes sont dans l'ordre : peu probable
-            x = 5.5*self.noteToPisteNumber[hauteurNote]
+            x = 5.5*(26-self.noteToPisteNumber[hauteurNote])
             for temps in self.getAllPoincons()[hauteurNote] :
                 y = temps * self._morceau._DST
                 pointsPoincons.append(Point(x, y))
