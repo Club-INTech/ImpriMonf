@@ -22,7 +22,7 @@ class LinKernighan():
         self.INF = 99999
         self.vitesseX = 6.6 # mm/sec
         self.vitesseY = 45.6 # mm/sec
-        self.longueurSegment = 400 # distance de segmentation (en mm).
+        self.longueurSegment = 500 # distance de segmentation (en mm).
         self.points = points
         self.lastSegmentPret = -1
         #print ("Avant traitement :")
@@ -151,7 +151,9 @@ class LinKernighan():
             pt.afficher()
 
     def distance(self, pt1, pt2):
-        return max(abs((pt1.getX()-pt2.getX())/self.vitesseX), abs((pt1.getY()-pt2.getY())/self.vitesseY))
+        #return max(abs((pt1.getX()-pt2.getX())/self.vitesseX), abs((pt1.getY()-pt2.getY())/self.vitesseY))
+        #léger hack pour améliorer l'optimisation
+        return max(abs((pt1.getX()-pt2.getX())/self.vitesseX), abs((pt1.getY()-pt2.getY())/self.vitesseY)) + min(abs((pt1.getX()-pt2.getX())/self.vitesseX), abs((pt1.getY()-pt2.getY())/self.vitesseY))/100
 
     def distanceTotaleParcours(self):
         d=0
