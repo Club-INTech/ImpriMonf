@@ -17,6 +17,7 @@ class Monf :
         else :
             import morceau
             self._morceau = morceau.Morceau()
+            self.estEnPause = False
 
         self.noteToPisteNumber = note.Note.noteToPisteNumber
 
@@ -158,6 +159,8 @@ class Monf :
                 x=round(point.getX(), 2)
                 y=round(point.getY(), 2)
                 avancementImpression = i/self.getNombrePoincons()*100
+                while self.estEnPause :
+                    time.sleep(1)
                 imprimante.poinconne(x, y)
 ##                time.sleep(1)
                 if not communication is None :
