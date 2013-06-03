@@ -67,12 +67,12 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
 
-        # POINCONNER LE CARTON
-        texte = 'Poinçonner le carton'
+        # CONNEXION AVEC L'IMPRIMANTE
+        texte = 'Réinitialiser la connexion avec l\'imprimante'
         lancerPoinconnageAction = QtGui.QAction(QtGui.QIcon('icons/printer.png'), texte, self)
         lancerPoinconnageAction.setShortcut('Ctrl+P')
         lancerPoinconnageAction.setStatusTip(texte)
-        lancerPoinconnageAction.triggered.connect(self.lancerPoinconnage)
+        lancerPoinconnageAction.triggered.connect(self.reloadImprimante)
 
         # ANNULER
         texte = 'Annuler'
@@ -169,8 +169,8 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.resize(900,600)
         self.refreshAnnulerRefaire()
         self.nouveau()
-        self.reloadImprimante()
         self.show()
+        self.reloadImprimante()
 
     # Indiquer qu'il y a eu des modifications
     def modificate(self) :
@@ -251,21 +251,6 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.modificate()
         self.refreshAnnulerRefaire()
 
-    def lancerPoinconnage(self) :
-        try :
-            self.imprimante = Imprimante()
-        except :
-            msgBox = QtGui.QMessageBox(self)
-            msgBox.setWindowTitle("Imprimante non trouvée !")
-            msgBox.setText("L'imprimante n'a pas été trouvée.")
-            msgBox.setIcon(QtGui.QMessageBox.Critical)
-            msgBox.setInformativeText("Vérifiez sa connection, puis réessayez.")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-            ret = msgBox.exec_()
-            return
-
-
-
     def askSave(self) :
         """
         Retourne True si le script doit continuer, False sinon (=Annuler)
@@ -307,22 +292,18 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def getMonf(self) :
         return self.monf
 
-    def reloadImprimante(self, imprimante=None) :
-        if imprimante is None :
-            try :
-                self.imprimante = Imprimante()
-            except :
-                msgBox = QtGui.QMessageBox(self)
-                msgBox.setWindowTitle("Imprimante non trouvée !")
-                msgBox.setText("L'imprimante n'a pas été trouvée.")
-                msgBox.setIcon(QtGui.QMessageBox.Critical)
-                msgBox.setInformativeText("Vérifiez sa connection, puis réessayez.")
-                msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
-                ret = msgBox.exec_()
-                self.imprimante = None
-
-        else :
-            self.imprimante = imprimante
+    def reloadImprimante(self) :
+        try :
+            self.imprimante = Imprimante()
+        except :
+            msgBox = QtGui.QMessageBox(self)
+            msgBox.setWindowTitle("Imprimante non trouvée !")
+            msgBox.setText("L'imprimante n'a pas été trouvée.")
+            msgBox.setIcon(QtGui.QMessageBox.Critical)
+            msgBox.setInformativeText("Vérifiez sa connexion, puis réessayez.")
+            msgBox.setStandardButtons(QtGui.QMessageBox.Ok)
+            ret = msgBox.exec_()
+            self.imprimante = None
 
         if not self.imprimante is None :
             self.recalageEtFinDImpression.reloadImprimante(self.imprimante)
