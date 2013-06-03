@@ -16,12 +16,13 @@ class AbstractProgressBar(QtGui.QProgressBar) :
     def setImprimante(self, imprimante) :
         self.imprimante = imprimante
 
-    def setBouton(self, bouton) :
+    def setBouton(self, bouton, forceDisabling=True) :
         self.bouton = bouton
-        self.bouton.clicked.connect(self.start)
+        self.forceDisablingBouton = forceDisabling
+##        self.bouton.clicked.connect(self.start)
 
     def start(self) :
-        if not self.bouton is None : self.bouton.setDisabled(True)
+        if not self.bouton is None and self.forceDisablingBouton: self.bouton.setDisabled(True)
         self.thread.start()
 
     def initialisation(self) :
@@ -31,7 +32,7 @@ class AbstractProgressBar(QtGui.QProgressBar) :
         self.setValue(self.minimum())
 
     def finir(self) :
-        if not self.bouton is None : self.bouton.setEnabled(True)
+        if not self.bouton is None and self.forceDisablingBouton: self.bouton.setEnabled(True)
         self.setValue(self.maximum())
 
 
@@ -64,12 +65,20 @@ class ImpressionThread(QtCore.QThread) :
     def __init__(self, parent) :
         QtCore.QThread.__init__(self)
         self.parent = parent
+        self.connect(self.parent, QtCore.SIGNAL("pauseImpression()"), self.pauseImpression)
+        self.connect(self.parent, QtCore.SIGNAL("reprendreImpression()"), self.reprendreImpression)
 
     def run(self) :
         self.parent.monf.imprimer(self.parent.imprimante, self)
 
     def poinconFait(self) :
         self.emit(QtCore.SIGNAL("poinconFait()"))
+
+    def pauseImpression(self) :
+        self.parent.monf.pauseImpression()
+
+    def reprendreImpression(self) :
+        self.parent.monf.reprendreImpression()
 
 
 class ProgressBarMonf(AbstractProgressBar) :
@@ -107,7 +116,8 @@ class ProgressBarMonf(AbstractProgressBar) :
 class ProgressBarImpression(AbstractProgressBar) :
     def __init__(self, parent) :
         AbstractProgressBar.__init__(self, parent)
-        self.thread = ImpressionThread(self)
+        self.thread = ImpressionThread(self.parent)
+        self.parent = parent
 
         self.connect(self.thread, QtCore.SIGNAL("finished()"), self.finir)
         self.connect(self.thread, QtCore.SIGNAL("terminated()"), self.finir)
@@ -115,6 +125,7 @@ class ProgressBarImpression(AbstractProgressBar) :
 
     def poinconFait(self) :
         self.setValue(self.value() + 1)
+
 
     def start(self) :
         self.setMaximum(self.monf.getNombrePoincons())

@@ -50,6 +50,8 @@ class LanceurConversion(QtGui.QDockWidget) :
         self.progressBarMonf = ProgressBarMonf(self.widget)
         self.progressBarMonf.setBouton(self.boutonConversion)
 
+        self.boutonConversion.clicked.connect(self.progressBarMonf.start)
+
         layout.addWidget(self.boutonConversion,0,0)
         layout.addWidget(self.progressBarMonf, 0,1)
 
@@ -145,7 +147,8 @@ class Impression(QtGui.QDockWidget) :
         self.imprimerBouton.setEnabled(False)
 
         self.progressBarImpression = ProgressBarImpression(self)
-        self.progressBarImpression.setBouton(self.imprimerBouton)
+        self.progressBarImpression.setBouton(self.imprimerBouton, False)
+        self.imprimerBouton.clicked.connect(self.imprimerAction)
 
         layout.addWidget(self.imprimerBouton,0,0)
         layout.addWidget(self.progressBarImpression, 1,0)
@@ -157,6 +160,19 @@ class Impression(QtGui.QDockWidget) :
     def reloadMonf(self, monf) :
         self.monf = monf
         self.progressBarImpression.setMonf(monf)
+
+    def imprimerAction(self) :
+        if self.imprimerBouton.text() == "Imprimer" :
+            self.progressBarImpression.start()
+            self.imprimerBouton.setText("Pause")
+
+        elif self.imprimerBouton.text() == "Pause" :
+            self.imprimerBouton.setText("Reprendre")
+            self.emit(QtCore.SIGNAL("pauseImpression()"))
+        else :
+            self.imprimerBouton.setText("Pause")
+            self.emit(QtCore.SIGNAL("reprendreImpression()"))
+
 
     def reloadImprimante(self, imprimante) :
         self.imprimante = imprimante

@@ -143,7 +143,6 @@ class Monf :
         linKernighan = self.rechercheChemin()
         nb_segments = linKernighan.getNbSegments()
         segments = []
-
         i=0
         id_segment = 0
         linKernighan.calculSegment(0)
@@ -181,6 +180,11 @@ class Monf :
             i = i+1
         linKernighan = LinKernighan(pointsPoincons)
         return linKernighan
+
+    def pauseImpression(self):
+        self.estEnPause = True
+    def reprendreImpression(self) :
+        self.estEnPause = False
 
     def morceau(self) :
         return self._morceau
