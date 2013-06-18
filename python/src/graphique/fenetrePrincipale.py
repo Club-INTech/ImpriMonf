@@ -11,6 +11,7 @@
 
 from PyQt4 import QtGui, QtCore
 from monfEditor import ConteneurMonf
+from popups import PopupSave
 from imprimante import Imprimante
 from dockWidgets import *
 import fenetreAide
@@ -60,12 +61,47 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         saveAsMonfAction.setStatusTip(texte)
         saveAsMonfAction.triggered.connect(self.saveAs)
 
-        # OUVRIR UN FICHIER SON
-        texte = 'Ouvrir un fichier MiDi'
+        # OUVRIR UN FICHIER MIDI
+        texte = 'Importer un fichier MiDi'
         openMidiAction = QtGui.QAction(QtGui.QIcon('icons/import-audio.png'), texte, self)
         openMidiAction.setShortcut('Ctrl+Shift+O')
         openMidiAction.setStatusTip(texte)
         openMidiAction.triggered.connect(self.openMidi)
+
+        # EXPORTER AU FORMAT MIDI
+        texte = 'Exporter au format MiDi'
+        exportMidiAction = QtGui.QAction(QtGui.QIcon('icons/export-audio.png'), texte, self)
+        exportMidiAction.setShortcut('Ctrl+Alt+S')
+        exportMidiAction.setStatusTip(texte)
+        exportMidiAction.triggered.connect(self.exportMidi)
+
+        # NEW NOTE
+        texte = 'Ajouter une note'
+        newNoteAction = QtGui.QAction(QtGui.QIcon('icons/new-note.png'), texte, self)
+##        newNoteAction.setShortcut('Ctrl+')
+        newNoteAction.setStatusTip(texte)
+        newNoteAction.setCheckable(True)
+        newNoteAction.triggered.connect(self.newNote)
+        self.newNoteAction = newNoteAction
+
+        # DEL NOTE
+        texte = 'Ajouter une note'
+        delNoteAction = QtGui.QAction(QtGui.QIcon('icons/del-note.png'), texte, self)
+##        delNoteAction.setShortcut('Ctrl+')
+        delNoteAction.setStatusTip(texte)
+        delNoteAction.setCheckable(True)
+        delNoteAction.triggered.connect(self.delNote)
+        self.delNoteAction = delNoteAction
+
+        # SELECTION
+        texte = 'Outil de sélection'
+        selectionAction = QtGui.QAction(QtGui.QIcon('icons/selection.png'), texte, self)
+##        selectionAction.setShortcut('Ctrl+')
+        selectionAction.setStatusTip(texte)
+        selectionAction.setCheckable(True)
+        selectionAction.triggered.connect(self.outilSelection)
+        self.selectionAction = selectionAction
+
 
         # CONNEXION AVEC L'IMPRIMANTE
         texte = 'Réinitialiser la connexion avec l\'imprimante'
@@ -123,6 +159,7 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         fileMenu.addAction(saveAsMonfAction)
         fileMenu.addSeparator()
         fileMenu.addAction(openMidiAction)
+        fileMenu.addAction(exportMidiAction)
         fileMenu.addSeparator()
         fileMenu.addAction(lancerPoinconnageAction)
         fileMenu.addSeparator()
@@ -131,6 +168,11 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         editMenu = menubar.addMenu("&Edition")
         editMenu.addAction(annulerAction)
         editMenu.addAction(refaireAction)
+
+        morceauMenu = menubar.addMenu("&Morceau")
+        morceauMenu.addAction(newNoteAction)
+        morceauMenu.addAction(delNoteAction)
+        morceauMenu.addAction(selectionAction)
 
         aideMenu = menubar.addMenu("&Aide")
         aideMenu.addAction(aideAction)
@@ -149,6 +191,12 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMenu.addAction(refaireAction)
         toolbarMenu.addSeparator()
         toolbarMenu.addAction(openMidiAction)
+        toolbarMenu.addAction(exportMidiAction)
+
+        toolbarMorceau = self.addToolBar("Barre d'édition de morceau")
+        toolbarMorceau.addAction(newNoteAction)
+        toolbarMorceau.addAction(delNoteAction)
+        toolbarMorceau.addAction(selectionAction)
 
         # Ajout de l'éditeur de monf et des dockwidget
         self.conteneurMonf = ConteneurMonf(self)
@@ -251,6 +299,19 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.modificate()
         self.refreshAnnulerRefaire()
 
+    # Exporter au format Midi
+    def exportMidi(self) :
+        midiFileName = QtGui.QFileDialog.getSaveFileNameAndFilter(self, "Exporter au format MiDi", filter="Fichiers Midi (*.mid *.midi)")[0]
+        if midiFileName is None or midiFileName=="":
+            return
+
+        popup = PopupSave(self)
+        popup.exec_()
+        
+        if popup.resultat == None :return
+        
+        self.monf._morceau.exporter(midiFileName, popup.resultat[0], popup.resultat[1])
+
     def askSave(self) :
         """
         Retourne True si le script doit continuer, False sinon (=Annuler)
@@ -316,6 +377,32 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         self.lanceurConversion.reloadMonf(self.monf)
         self.recalageEtFinDImpression.reloadMonf(self.monf)
         self.impression.reloadMonf(self.monf)
+
+    def disableTools(self) :
+        self.delNoteAction.setChecked(False)
+        self.newNoteAction.setChecked(False)
+        self.selectionAction.setChecked(False)
+
+    def newNote(self) :
+        if not self.newNoteAction.isChecked() :
+            self.conteneurMonf.monfEditor.setTool(None)
+            return
+        self.disableTools()
+        self.newNoteAction.setChecked(True)
+
+    def delNote(self) :
+        if not self.delNoteAction.isChecked() :
+            self.conteneurMonf.monfEditor.setTool(None)
+            return
+        self.disableTools()
+        self.delNoteAction.setChecked(True)
+
+    def outilSelection(self) :
+        if not self.selectionAction.isChecked() :
+            self.conteneurMonf.monfEditor.setTool(None)
+            return
+        self.disableTools()
+        self.selectionAction.setChecked(True)
 
 
 if __name__ == "__main__" :

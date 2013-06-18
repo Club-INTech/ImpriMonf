@@ -23,6 +23,8 @@ class Monf :
 
     def initPoincons(self) :
         self._poincons = {}
+        
+    
 
     def conversion(self, communication=None, notesAConvertir=None) :
         """
@@ -30,36 +32,10 @@ class Monf :
         La partie communication à passer en paramètre sert à remplir une éventuelle barre de chargement
         """
         self.initPoincons()
-        if notesAConvertir is None : notes = self._morceau._output.getNotesBetween()
-        else : notes = notesAConvertir
-
-
-        if notes == [] : return
-
         if not communication is None : communication.addValue(1)
-        # Merge notes
-        newNotes = []
-        notesPassees = 0
-        for note in notes :
-            if newNotes == [] : newNotes.append(note.copy())
-            else :
-                noteAjoutee = False
-                for newNote in newNotes :
-                    if str(note) == str(newNote) and note.timeIn <= newNote.timeOut and note.timeOut >= newNote.timeIn :
-                        newNote.timeIn = min(newNote.timeIn, note.timeIn)
-                        newNote.timeOut = max(newNote.timeOut, note.timeOut)
-                        noteAjoutee = True
-                        break
-                if not noteAjoutee : newNotes.append(note.copy())
-
-                notesPassees += 1
-                if not communication is None and notesPassees > 20:
-                    communication.addValue(notesPassees)
-                    notesPassees = 0
-
+        newNotes = self._morceau._output.mergeNotesBetween(communication =communication, notes = notesAConvertir)
 
         if not communication is None : communication.raz()
-
 
         notesPassees = 0
         precision = .9
@@ -188,6 +164,8 @@ class Monf :
 
     def morceau(self) :
         return self._morceau
+    
+        
 
 def easyMonf() :
     """ Fonction de test. Retourne un Monf assez simple """

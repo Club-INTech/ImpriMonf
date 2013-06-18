@@ -44,6 +44,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.infoBulle = InfoBulle()
         self.notesAffichees = []
+        self.tool = None
 
         if not monf is None :
             self.taillePoincon = monf._morceau._taillePoincon / monf._morceau._DST
@@ -306,6 +307,9 @@ class MonfEditor(QtGui.QWidget) :
         self.update()
         self.getFenetrePrincipale().modificate()
 
+    def setTool(self, tool) :
+        self.tool = tool
+
 class InfoBulle :
     sizeX = 120
     sizeY = 85
@@ -459,6 +463,15 @@ class ConteneurMonf(QtGui.QWidget) :
         self.monfEditor.startX = value/ConteneurMonf.precision
         self.monfEditor.reloadNotes()
         self.monfEditor.update()
+
+class Tool :
+    tools = ["select", "add", "remove"]
+    def __init__(self, typeOfTool) :
+        if not typeOfTool in Tool.tools : raise Exception("Le type d'outil n'existe pas !! : ", typeOfTool)
+        self.type = typeOfTool
+
+        if self.type == "select" :
+            self.selectionNotes = []
 
 if __name__ == '__main__':
     import sys

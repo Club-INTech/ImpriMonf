@@ -20,7 +20,7 @@ class Note :
         else : self.color = QtGui.QColor(0,255,0)
 
         if not byte is None : self.setByte(byte)
-        else : self.byte = None
+        else : self.getByte()
 
     # Permet de configurer la note selon un byte comme specifie dans la
     # norme Midi
@@ -28,6 +28,12 @@ class Note :
         self.number=Note.numbers[byte%12]
         self.octave=byte//12
         self.byte = byte
+
+    def getByte(self) :
+        if self.number != None and self.octave != None :
+            self.byte = self.octave*12 + Note.numbers.index(self.number)
+        else:
+            self.byte=None
 
 
     # Cast as String

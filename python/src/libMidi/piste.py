@@ -9,6 +9,7 @@ class Piste :
         self.color=[0,0,0]
 
     def addNote(self, channel, noteInstance) :
+        noteInstance.setChannel(channel)
         self._channels[channel].append(noteInstance)
         self._lastNotes[channel].append(noteInstance)
 

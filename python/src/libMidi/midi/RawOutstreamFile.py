@@ -2,23 +2,23 @@
 
 # standard library imports
 import sys
-from types import StringType
+#from types import StringType
 from struct import unpack
-from cStringIO import StringIO
+from io import BytesIO
 
 # custom import
 from DataTypeConverters import writeBew, writeVar, fromBytes
 
 class RawOutstreamFile:
-    
+
     """
-    
+
     Writes a midi file to disk.
-    
+
     """
 
     def __init__(self, outfile=''):
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
         self.outfile = outfile
 
 
@@ -26,10 +26,11 @@ class RawOutstreamFile:
 
 
     def writeSlice(self, str_slice):
+        if type(str_slice) != bytes : str_slice = bytes(str_slice, "UTF-8")
         "Writes the next text slice to the raw data"
         self.buffer.write(str_slice)
-        
-        
+
+
     def writeBew(self, value, length=1):
         "Writes a value to the file as big endian word"
         self.writeSlice(writeBew(value, length))
@@ -43,7 +44,7 @@ class RawOutstreamFile:
     def write(self):
         "Writes to disc"
         if self.outfile:
-            if isinstance(self.outfile, StringType):
+            if isinstance(self.outfile, str):
                 outfile = open(self.outfile, 'wb')
                 outfile.write(self.getvalue())
                 outfile.close()
@@ -51,7 +52,7 @@ class RawOutstreamFile:
                 self.outfile.write(self.getvalue())
         else:
             sys.stdout.write(self.getvalue())
-                
+
     def getvalue(self):
         return self.buffer.getvalue()
 
@@ -59,7 +60,7 @@ class RawOutstreamFile:
 if __name__ == '__main__':
 
     out_file = 'test/midifiles/midiout.mid'
-    out_file = ''
+##    out_file = ''
     rawOut = RawOutstreamFile(out_file)
     rawOut.writeSlice('MThd')
     rawOut.writeBew(6, 4)

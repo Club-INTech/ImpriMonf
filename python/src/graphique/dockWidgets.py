@@ -145,6 +145,7 @@ class Impression(QtGui.QDockWidget) :
 
         self.imprimerBouton = QtGui.QPushButton("Imprimer", self.widget)
         self.imprimerBouton.setEnabled(False)
+        self.imprimerBouton.setIcon(QtGui.QIcon("icons/play.png"))
 
         self.progressBarImpression = ProgressBarImpression(self)
         self.progressBarImpression.setBouton(self.imprimerBouton, False)
@@ -165,12 +166,15 @@ class Impression(QtGui.QDockWidget) :
         if self.imprimerBouton.text() == "Imprimer" :
             self.progressBarImpression.start()
             self.imprimerBouton.setText("Pause")
+            self.imprimerBouton.setIcon(QtGui.QIcon("icons/pause.png"))
 
         elif self.imprimerBouton.text() == "Pause" :
             self.imprimerBouton.setText("Reprendre")
             self.emit(QtCore.SIGNAL("pauseImpression()"))
+            self.imprimerBouton.setIcon(QtGui.QIcon("icons/play.png"))
         else :
             self.imprimerBouton.setText("Pause")
+            self.imprimerBouton.setIcon(QtGui.QIcon("icons/pause.png"))
             self.emit(QtCore.SIGNAL("reprendreImpression()"))
 
 
