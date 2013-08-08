@@ -1,3 +1,4 @@
+
 /** Timers pour interruptions régulières **/
 #include <SimpleTimer.h>
 SimpleTimer timerAsservPWM;
@@ -8,24 +9,26 @@ const byte pinSignal1 = 2;// pin d'interruption 0 pour le premier signal
 const byte pinSignal2 = 3;// pin d'interruption 1 pour le second signal
 
 /** constantes pour le moteur à courant continu **/
-const byte pinDIR = 4;                   // pin de direction du moteur à courant continu
-const byte pinPWM = 5;                   // pin de PWM du moteur à courant continu
+const byte pinDIR1 = 5;                   // pin de direction du moteur à courant continu
+const byte pinPWM1 = 6;                   // pin de PWM du moteur à courant continu
+const byte pinDIR2 = 8;                   // pin de direction du moteur à courant continu
+const byte pinPWM2 = 9;                   // pin de PWM du moteur à courant continu
 const int frequence_asserv = 150;        // fréquence de mise à jour du PWM, en Hz
 const float nb_ticks_1mm = 4.837070254;  //constante de conversion
 
 /** constantes pour le moteur pas à pas **/
-const byte pinSENS  = 6;    // pin de sens du moteur pas à pas
-const byte pinCLOCK = 7;    // pin d'impulsion du moteur pas à pas
-const byte pinENABLE = 8;   // pin d'activation du moteur pas à pas
+const byte pinSENS  = 13;    // pin de sens du moteur pas à pas
+const byte pinCLOCK = 11;    // pin d'impulsion du moteur pas à pas
+const byte pinENABLE = 12;   // pin d'activation du moteur pas à pas
 const int frequence_PasAPas = 650;     // fréquence d'envoi des impulsions au pas à pas, en Hz
 const float nb_pas_1mm = 100.352113; //constante de conversion
 
 /** constantes pour les distributeurs **/
-const byte pinBaisseVerin = 9;
-const byte pinLeveVerin = 10;
+const byte pinBaisseVerin = 4;
+const byte pinLeveVerin = 7;
 
 /** constantes pour la lecture des photodiodes **/
-const byte pinlecture = 11;
+const byte pinlecture = 10;
 
 /** variables globales, partagées par plusieurs fonctions **/
 long ticks = 0;          // ticks mesurés par l'encodeur et pris en compte par l'asservissement 
@@ -56,13 +59,18 @@ void setup() {
     attachInterrupt(1, update_ticks, CHANGE); //                       et pin3 = pin d'interruption 1
     
     //initialisation des états des broches
-    pinMode(pinPWM,  OUTPUT);
-    pinMode(pinDIR,  OUTPUT);
+    pinMode(pinPWM1,  OUTPUT);
+    pinMode(pinDIR1,  OUTPUT);
+    pinMode(pinPWM2,  OUTPUT);
+    pinMode(pinDIR2,  OUTPUT);
     pinMode(pinSENS, OUTPUT);
     pinMode(pinCLOCK, OUTPUT);
     pinMode(pinENABLE, OUTPUT);
     pinMode(pinBaisseVerin, OUTPUT);
     pinMode(pinLeveVerin, OUTPUT);
+    
+    digitalWrite(pinBaisseVerin, HIGH);
+    digitalWrite(pinLeveVerin, HIGH);
     
     //pinMode(pinlecture, INPUT);
     
@@ -70,7 +78,8 @@ void setup() {
     //DDRC |= 0b00011111;
     
     //immobilisation initiale du moteur
-    analogWrite(pinPWM, 0);
+    analogWrite(pinPWM1, 0);
+    analogWrite(pinPWM2, 0);
     
     // Interruptions pour calcul du PID et asservissement
     timerAsservPWM.setInterval(1000./(frequence_asserv/prescaler), asservissementPWM);
@@ -141,18 +150,18 @@ void loop(){
   
   //activation de l'asservissement
   else if (msg == "asserv_on") {
-    digitalWrite(pinLeveVerin, HIGH);
-    delay(2000);
     digitalWrite(pinLeveVerin, LOW);
+    delay(2000);
+    digitalWrite(pinLeveVerin, HIGH);
     asserv_enable = true;
   }
   
   //désactivation de l'asservissement
   else if (msg == "asserv_off") {
     asserv_enable = false;
-    digitalWrite(pinLeveVerin, HIGH);
-    delay(2000);
     digitalWrite(pinLeveVerin, LOW);
+    delay(2000);
+    digitalWrite(pinLeveVerin, HIGH);
   }
   
   //déplacement en un point
@@ -171,19 +180,24 @@ void loop(){
   
   //poinçonnage
   else if (msg == "poincon_bas") {
-    digitalWrite(pinBaisseVerin, HIGH);
+    digitalWrite(pinBaisseVerin, LOW);
   }
   else if (msg == "poincon_haut") {
-    digitalWrite(pinBaisseVerin, LOW);
-    digitalWrite(pinLeveVerin, HIGH);
+    digitalWrite(pinBaisseVerin, HIGH);
+    digitalWrite(pinLeveVerin, LOW);
   }
   else if (msg == "poincon_libre") {
-    digitalWrite(pinLeveVerin, LOW);
+    digitalWrite(pinLeveVerin, HIGH);
   }
     
   //lit les pistes et renvoit le nombre de trous lus
   else if (msg == "lecture") {
     lire_photodiodes();
+  }
+  //lit les ticks
+  else if (msg == "ticks") {
+    Serial.println(ticks
+    );
   }
 }
 
@@ -240,28 +254,37 @@ void asservissementPWM()
     else if(pwm > bridage_pwm)
         pwm = bridage_pwm;
         
-        
     if(abs(pwm) < kp+5)
+    {
       //évite de forcer inutilement
-      analogWrite(pinPWM, 0);
+      analogWrite(pinPWM1, 0);
+      analogWrite(pinPWM2, 0);
+    }
       
     else
     {
       //Contrôle du moteur
       if(pwm < 0)
       {
-          digitalWrite(pinDIR, HIGH);
-          analogWrite(pinPWM, -pwm);
+          digitalWrite(pinDIR1, HIGH);
+          digitalWrite(pinDIR2, HIGH);
+          analogWrite(pinPWM1, -pwm);
+          analogWrite(pinPWM2, -pwm);
       }
       else
       {
-          digitalWrite(pinDIR, LOW);
-          analogWrite(pinPWM, pwm);
+          digitalWrite(pinDIR1, LOW);
+          digitalWrite(pinDIR2, LOW);
+          analogWrite(pinPWM1, pwm);
+          analogWrite(pinPWM2, pwm);
       }
     }
   }
   else
-    analogWrite(pinPWM, 0);
+  {
+    analogWrite(pinPWM1, 0);
+    analogWrite(pinPWM2, 0);
+  }
 }
 
 /** Gestion de la broche Clock du moteur pas à pas **/
