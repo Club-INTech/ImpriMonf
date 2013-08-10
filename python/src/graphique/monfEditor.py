@@ -14,6 +14,8 @@ from PyQt4 import QtGui, QtCore
 from note import Note, getNumberOctave
 from controlZ import ControlZ, Action
 
+
+
 class MonfEditor(QtGui.QWidget) :
 
     hauteurPiste = 18
@@ -41,6 +43,7 @@ class MonfEditor(QtGui.QWidget) :
 
         self.modifNote = None
         self.controlZ = ControlZ()
+        self.playbackTime  =0
 
         self.infoBulle = InfoBulle()
         self.notesAffichees = []
@@ -53,6 +56,10 @@ class MonfEditor(QtGui.QWidget) :
         self.show()
         self.setMouseTracking(True)
         self.currentNote = None
+        
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        
+        MonfEditor.editor = self
 
     def getPoincons(self) :
         self.poincons = self._monf.getAllPoincons()
@@ -103,6 +110,9 @@ class MonfEditor(QtGui.QWidget) :
 
         if self.currentNote != None :
             self.drawNote(qp, self.currentNote, option="ALPHA")
+            
+        # On affiche le repère de lecture :
+        qp.fillRect(MonfEditor.DST*(self.playbackTime-self.startX), 0, 2, self.height(), QtGui.QColor(255,0,0))
 
         # On affiche l'info-bulle
         self.infoBulle.update(qp)
@@ -172,6 +182,9 @@ class MonfEditor(QtGui.QWidget) :
                 self.modifNote.note.checkTime(priority = "timeOut")
                 self.update()
                 self.getFenetrePrincipale().modificate()
+                
+        elif self.modifNote is None and QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton :
+            self.setPlaybackTime(self.getTimeAndPisteNumberAtPosition(event.pos())[0])
         else :
             self.modifNote = None
             self.refreshInfoBulle(event.pos())
@@ -189,7 +202,11 @@ class MonfEditor(QtGui.QWidget) :
 
         if QtGui.QApplication.mouseButtons() == QtCore.Qt.LeftButton :
             modifNote = self.getNoteAtPixelPosition(event.pos())
-            if modifNote is None : return
+            self.modifNote = modifNote
+            # Modification du temps de lecture courante
+            if modifNote is None :
+                self.setPlaybackTime(self.getTimeAndPisteNumberAtPosition(event.pos())[0])
+                return
             self.modifNote = modifNote
             self.currentNote = modifNote.note.copy()
             self.modifNote.note.backupTimes()
@@ -213,6 +230,7 @@ class MonfEditor(QtGui.QWidget) :
         if not [self.modifNote.note.timeIn, self.modifNote.note.timeOut] == self.modifNote.note.getBackup() :
             self.controlZ.addAction(Action(note, ["timeIn", "timeOut"], self.modifNote.note.getBackup(), [self.modifNote.note.timeIn, self.modifNote.note.timeOut]))
             self._parent.parent.annulerAction.setEnabled(True)
+            self._monf._morceau._output.remergeNotes = True
 
 
         self.currentNote = None
@@ -292,6 +310,7 @@ class MonfEditor(QtGui.QWidget) :
         note = Note(number=number, octave=octave, timeIn=time-size/2, timeOut=time+size/2, QColor=QtGui.QColor(127,127,127))
 
         self._monf._morceau.ajouterNote(note)
+        self._monf._morceau._output.remergeNotes = True
 
         self.reloadNotes()
         self.update()
@@ -302,6 +321,7 @@ class MonfEditor(QtGui.QWidget) :
         if modifNote is None : return
 
         self._monf._morceau._output.enleverNote(modifNote.note)
+        self._monf.morceau()._output.remergeNotes = True
 
         self.reloadNotes()
         self.update()
@@ -309,6 +329,10 @@ class MonfEditor(QtGui.QWidget) :
 
     def setTool(self, tool) :
         self.tool = tool
+        
+    def setPlaybackTime(self, time) :
+        self.playbackTime = time
+        self.update()
 
 class InfoBulle :
     sizeX = 120
@@ -381,6 +405,8 @@ class InfoBulle :
 
     def setPosition(self, pos) :
         self.x, self.y = pos.x(), pos.y()
+        
+    
 
     ### CLASS METHODES ###
     def init() :

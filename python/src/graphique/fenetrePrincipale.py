@@ -10,13 +10,17 @@
 #-------------------------------------------------------------------------------
 
 from PyQt4 import QtGui, QtCore
+
 from monfEditor import ConteneurMonf
-from popups import PopupSave
+from popups import *
 from imprimante import Imprimante
 from dockWidgets import *
 import fenetreAide
 import time
 import threading
+
+from playerMONF import Player
+
 
 
 
@@ -27,9 +31,12 @@ class FenetrePrincipale(QtGui.QMainWindow) :
     def __init__(self, QApplication) :
         QtGui.QMainWindow.__init__(self)
         self.app = QApplication
+        Player.init()
         self.modifie = False
         self.monfFileName = None
         self.initUID()
+
+
 
     def initUID(self) :
 
@@ -74,6 +81,21 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         exportMidiAction.setShortcut('Ctrl+Alt+S')
         exportMidiAction.setStatusTip(texte)
         exportMidiAction.triggered.connect(self.exportMidi)
+
+        # PLAY
+        texte = 'Play'
+        playAction = QtGui.QAction(QtGui.QIcon('icons/play.png'), texte, self)
+        playAction.setShortcut('Space')
+        playAction.setStatusTip(texte)
+        playAction.triggered.connect(self.play)
+        self.playAction = playAction
+        Player.setAction(self.playAction)
+
+        # OPTIONS PLAYER
+        texte = 'Options du player'
+        playerOptionsAction = QtGui.QAction(QtGui.QIcon('icons/settings.png'), texte, self)
+        playerOptionsAction.setStatusTip(texte)
+        playerOptionsAction.triggered.connect(self.playerOptions)
 
         # NEW NOTE
         texte = 'Ajouter une note'
@@ -174,6 +196,10 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         morceauMenu.addAction(delNoteAction)
         morceauMenu.addAction(selectionAction)
 
+        playMenu = menubar.addMenu("&Player")
+        playMenu.addAction(playAction)
+        playMenu.addAction(playerOptionsAction)
+
         aideMenu = menubar.addMenu("&Aide")
         aideMenu.addAction(aideAction)
         aideMenu.addAction(creditsAction)
@@ -196,7 +222,11 @@ class FenetrePrincipale(QtGui.QMainWindow) :
         toolbarMorceau = self.addToolBar("Barre d'édition de morceau")
         toolbarMorceau.addAction(newNoteAction)
         toolbarMorceau.addAction(delNoteAction)
-        toolbarMorceau.addAction(selectionAction)
+
+        toolbarPlayback = self.addToolBar("Barre de playback")
+        toolbarPlayback.addAction(playAction)
+        toolbarPlayback.addAction(playerOptionsAction)
+
 
         # Ajout de l'éditeur de monf et des dockwidget
         self.conteneurMonf = ConteneurMonf(self)
@@ -307,9 +337,9 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
         popup = PopupSave(self)
         popup.exec_()
-        
-        if popup.resultat == None :return
-        
+
+        if not hasattr(popup, "resultat") or popup.resultat == None :return
+
         self.monf._morceau.exporter(midiFileName, popup.resultat[0], popup.resultat[1])
 
     def askSave(self) :
@@ -352,6 +382,23 @@ class FenetrePrincipale(QtGui.QMainWindow) :
 
     def getMonf(self) :
         return self.monf
+
+    # Play
+    def play(self) :
+        if not Player.isPlaying :
+            Player.play(self.getMonf().morceau(), self.conteneurMonf.monfEditor.playbackTime)
+            self.playAction.setIcon(QtGui.QIcon("icons/pause.png"))
+        else :
+            Player.stop()
+            self.playAction.setIcon(QtGui.QIcon("icons/play.png"))
+
+    def playerOptions(self) :
+        popup = PopupPlayerOptions(self)
+        popup.exec_()
+
+        if not hasattr(popup, "resultat") or popup.resultat == None :return
+
+        Player.setInstrument(popup.resultat[0])
 
     def reloadImprimante(self) :
         try :

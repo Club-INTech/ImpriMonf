@@ -5,10 +5,15 @@ from MidiOutFile import MidiOutFile
 
 from outputMidi import OutputMidi
 
+from playerMONF import Player
+
+import time
+
 class EventMidi :
     events = []
-    def __init__(self, time, on, channel, byte) :
+    def __init__(self, time, timeHuman, on, channel, byte) :
         self.time = time
+        self.timeHuman = timeHuman
         self.on = on
         self.channel = channel
         self.byte = byte
@@ -29,6 +34,8 @@ class Morceau :
         self._ignoredPistes = []
         self._DST           = Morceau.DST
         self._taillePoincon = Morceau.taillePoincon
+        
+        self.remergeNotes = False
 
         if not nomFichier is None :
             self._nomFichier = nomFichier
@@ -76,7 +83,18 @@ class Morceau :
         Ajoute une note
         """
         self._output.ajouterNote(note)
+        
+    def getEvents(self, notes, aplatir=False) :
+        for note in notes :
+            if not aplatir : channel = note.channel
+            else : channel = 1
+            
+            EventMidi(self._output.human_timeToAbs_time(note.timeIn), note.timeIn, True, channel, note.byte)
+            EventMidi(self._output.human_timeToAbs_time(note.timeOut), note.timeOut, False, channel, note.byte)
 
+        EventMidi.trier()
+        return EventMidi
+        
     def exporter(self, nom_fichier, instrument, aplatir) :
         midi = MidiOutFile(nom_fichier)
         midi.header(0, self._output.nTracks, self._output.division)
@@ -92,16 +110,7 @@ class Morceau :
         if not aplatir : allNotes = self._output.getNotesBetween()
         else : allNotes = self._output.mergeNotesBetween()
 
-        # Sorting
-        for note in allNotes :
-            if not aplatir : channel = note.channel
-            else : channel = 1
-            
-            EventMidi(self._output.human_timeToAbs_time(note.timeIn), True, channel, note.byte)
-            EventMidi(self._output.human_timeToAbs_time(note.timeOut), False, channel, note.byte)
-
-        EventMidi.trier()
-
+        self.getEvents(allNotes, aplatir)
         lastTime = 0
         for event in EventMidi.events :
 ##            print (event.time)
@@ -121,6 +130,34 @@ class Morceau :
 
         midi.eof() # currently optional, should it do the write instead of write??
         midi.write()
+        
+    def play(self, timeIn, refresh=None) :
+        self.playback = True
+            
+        notes = self._output.mergeNotesBetween(timeIn)
+        events = self.getEvents(notes, True)
+        
+        currentTime = timeIn
+        clock = time.clock()
+        for event in EventMidi.events :
+            while currentTime < event.timeHuman :
+                if self.playback == False :return # Arrêt de la lecture si on la kill
+                time.sleep(.001)
+                currentTime = time.clock() - (clock - timeIn) 
+                if not refresh is None : refresh(currentTime)
+                
+            
+            currentTime = event.timeHuman
+            if event.on : Player.output.note_on(event.byte, 0x40, 1) # ANCIENNEMENT 0x40
+            else : Player.output.note_off(event.byte, 0x40, 1) # pareil
+            
+        self.stopPlayback()
+        
+    def stopPlayback(self) :
+        self.playback = False
+        EventMidi.purge()
+        for i in range(0,128) :
+            Player.output.note_off(i, 0x40, 1)
 
 if __name__=="__main__" :
     m = Morceau("../../../multimedia/MIDIFILES/TEST1.mid")

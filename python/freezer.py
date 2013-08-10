@@ -2,17 +2,18 @@
 from cx_Freeze import setup, Executable
 import serial
 
-
-sys.path.append(os.path.join(os.getcwd(), "src/Graphique"))
-sys.path.append(os.path.join(os.getcwd(), "src/libMidi"))
+sys.path.append(os.path.join(os.getcwd(), "src/Graphique/"))
+sys.path.append(os.path.join(os.getcwd(), "src/libMidi/"))
 sys.path.append(os.path.join(os.getcwd(), "src/libMidi/midi"))
 sys.path.append(os.path.join(os.getcwd(), "src"))
 sys.path.append(os.getcwd())
 
+import player
+
 include_files = ["icons/"]
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["os","serial"],
-                     "excludes": ["PyQt4.QtOpenGL", "PyQt4.QtNetwork", "PyQt4.QtScript", "PyQt4.QtSql", "PyQt4.QtSvg", "PyQt4.QtTest", "PyQt4.QtXml"],
+build_exe_options = {"packages": ["os","serial", "pygame.midi", "player"],
+                     "excludes": ["PyQt4.QtOpenGL", "PyQt4.QtNetwork", "PyQt4.QtScript", "PyQt4.QtSql", "PyQt4.QtSvg", "PyQt4.QtTest", "PyQt4.QtXml", "pygame.tests", "pygame.movie", "pygame.overlay"],
                      "include_files":include_files
                      }
 

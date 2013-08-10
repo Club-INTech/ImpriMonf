@@ -19,6 +19,9 @@ class OutputMidi(MidiOutStream):
         self.division = 192
         self.tempovalue = 359281
         self.calculateTempo()
+        
+        self.mergedNotes = None
+        self.remergeNotes = False
 
         self.nn = 4
         self.dd = 4
@@ -107,13 +110,16 @@ class OutputMidi(MidiOutStream):
 
         return notes_ok
         
-    def mergeNotesBetween(self, time0=None, time1=None, communication=None, notes=None) :
+    def remergeNotesAction(self, communication=None) :
         """
         Crée de nouvelles notes mergées sur la base des anciennes
         """
         newNotes = []
         notesPassees = 0
-        if notes is None : notes = self.getNotesBetween(time0, time1)
+        notes = self.getNotesBetween()
+        
+        print ("Remerge")
+        self.remergeNotes = False
         
         for note in notes :
             if newNotes == [] : newNotes.append(note.copy())
@@ -132,8 +138,21 @@ class OutputMidi(MidiOutStream):
                     communication.addValue(notesPassees)
                     notesPassees = 0
                     
-        return newNotes
-
+        self.mergedNotes = newNotes
+        
+    def mergeNotesBetween(self, time0=None, time1=None, communication=None, notes=None) :
+        """
+        Crée de nouvelles notes mergées sur la base des anciennes
+        """
+        if self.mergedNotes is None or self.remergeNotes:
+            self.remergeNotesAction(communication)
+            
+        notes = []
+        for note in self.mergedNotes :
+            if (time1 is None or note.timeIn <= time1) and (time0 is None or note.timeOut >= time0):
+                notes.append(note)
+                
+        return notes
 
     def getNoteAtPosition(self, numero_piste, temps, notesAffichees) :
         lastTimeOut=0
@@ -161,6 +180,7 @@ class OutputMidi(MidiOutStream):
             for channel in self._tracks[piste]._channels :
                 if note in channel:
                    channel.remove(note)
+            
 
 if __name__ == "__main__" :
     event_handler = OutputMidi()

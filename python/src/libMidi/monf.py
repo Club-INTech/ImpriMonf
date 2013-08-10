@@ -160,7 +160,7 @@ class Monf :
     def pauseImpression(self):
         self.estEnPause = True
     def reprendreImpression(self) :
-        self.estEnPause = False
+        self.estEnPause = False        
 
     def morceau(self) :
         return self._morceau
