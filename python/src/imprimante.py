@@ -43,7 +43,7 @@ class Imprimante:
 
         #liste les périphériques présents sur les ports COM
         sources = []
-        for location in ["com"+str(i) for i in range(22)]:
+        for location in ["com"+str(i) for i in range(256)]:
             try:
                 serialport = Serial(location, 9600, timeout = 0)
                 sources.append(location)
